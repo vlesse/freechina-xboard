@@ -1,0 +1,8 @@
+{
+    "name": "Jeepay Midtrans",
+    "code": "jeepay_midtrans",
+    "type": "payment",
+    "version": "1.0.0",
+    "description": "Xboard → Jeepay Midtrans (MID_PC)；订单按人民币计价，自动换算 IDR 后跳转收银台",
+    "author": "free-china"
+}

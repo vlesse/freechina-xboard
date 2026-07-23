@@ -3,7 +3,7 @@
 基于 [Xboard](https://github.com/cedar2025/Xboard) 的二次定制发行版，提供：
 
 - **Web3 风格官网主站** + 现代化登录 / 注册页  
-- **Jeepay 支付插件**：ABA 个人 KHQR、ABA PayWay 官方、PayPal  
+- **Jeepay 支付插件**：ABA 个人 KHQR、ABA PayWay 官方、PayPal、**Midtrans**  
 - **TokenPay 支付插件**：USDT-TRC20 / TRX 等链上支付  
 - 与 [Jeepay](https://github.com/jeequan/jeepay) / TokenPay 等收款系统配合使用  
 
@@ -16,7 +16,7 @@
 | 文档 | 说明 |
 |------|------|
 | [docs/DEPLOY.md](docs/DEPLOY.md) | **完整部署**（推荐）：一键脚本 + 手动步骤、环境要求、配套系统 |
-| [docs/PLUGINS-ONLY.md](docs/PLUGINS-ONLY.md) | **只装支付插件**：不用本仓库前端，只把 4 个支付通道接到你现有的 Xboard |
+| [docs/PLUGINS-ONLY.md](docs/PLUGINS-ONLY.md) | **只装支付插件**：不用本仓库前端，只把 5 个支付通道接到你现有的 Xboard |
 | [docs/PAYMENT-CHANNELS.md](docs/PAYMENT-CHANNELS.md) | 各支付通道说明、汇率配置、回调注意点 |
 | [docs/BRANDING.md](docs/BRANDING.md) | **品牌 / 标志修改**：拉源码后 FreeChina、FC Logo 在哪里改 |
 
@@ -40,6 +40,7 @@
 | `JeepayAbaQr` | `JeepayAbaQr` | Jeepay `ABA_KHQR` | 个人 KHQR 扫码，CNY→KHR 自动换算，说明页手输瑞尔 |
 | `JeepayAbaPc` | `JeepayAbaPc` | Jeepay `ABA_PC` | ABA PayWay 官方收银台 / API |
 | `JeepayPaypal` | `JeepayPaypal` | Jeepay `PP_PC` | PayPal |
+| `JeepayMidtrans` | `JeepayMidtrans` | Jeepay `MID_PC` | Midtrans 印尼收银台，CNY→IDR |
 | `TokenPay` | `TokenPay` | TokenPay 自建 | USDT/TRX 等 |
 
 ---

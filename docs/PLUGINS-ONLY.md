@@ -13,6 +13,7 @@
 | `JeepayAbaQr` | JeepayAbaQr | Jeepay + ABA 个人 KHQR 中转 |
 | `JeepayAbaPc` | JeepayAbaPc | Jeepay + ABA PayWay 官方 |
 | `JeepayPaypal` | JeepayPaypal | Jeepay + PayPal |
+| `JeepayMidtrans` | JeepayMidtrans | Jeepay + Midtrans（MID_PC / IDR） |
 | `TokenPay` | TokenPay | 自建 TokenPay |
 
 可选：`public/aba-khqr-pay.html`（仅 KHQR 手输金额说明页需要）。
@@ -39,10 +40,9 @@ bash scripts/install-plugins-only.sh /www/wwwroot/your-xboard
 
 脚本会：
 
-1. 复制 4 个插件到 `plugins-core/`  
+1. 复制 5 个支付插件到 `plugins-core/`（含 JeepayMidtrans）  
 2. 可选复制 `aba-khqr-pay.html` 到 `public/`  
-3. 尝试写入 `v2_plugins` 启用记录（失败时提示你手动在后台启用）  
-4. 执行 `php artisan optimize:clear`  
+3. 执行 `php artisan optimize:clear`（插件启用请在后台或按下方 SQL 写入 `v2_plugins`）  
 
 ---
 
@@ -51,10 +51,11 @@ bash scripts/install-plugins-only.sh /www/wwwroot/your-xboard
 ```bash
 XBOARD=/www/wwwroot/your-xboard
 
-cp -a overlay/plugins-core/JeepayAbaQr   $XBOARD/plugins-core/
-cp -a overlay/plugins-core/JeepayAbaPc   $XBOARD/plugins-core/
-cp -a overlay/plugins-core/JeepayPaypal  $XBOARD/plugins-core/
-cp -a overlay/plugins-core/TokenPay      $XBOARD/plugins-core/
+cp -a overlay/plugins-core/JeepayAbaQr     $XBOARD/plugins-core/
+cp -a overlay/plugins-core/JeepayAbaPc     $XBOARD/plugins-core/
+cp -a overlay/plugins-core/JeepayPaypal    $XBOARD/plugins-core/
+cp -a overlay/plugins-core/JeepayMidtrans  $XBOARD/plugins-core/
+cp -a overlay/plugins-core/TokenPay        $XBOARD/plugins-core/
 
 # 可选：KHQR 说明页
 cp -a overlay/public/aba-khqr-pay.html   $XBOARD/public/
@@ -71,6 +72,7 @@ VALUES
 ('Jeepay ABA KHQR', 'jeepay_aba_qr', 'payment', '1.0.0', 1, '[]', NOW(), NOW(), NOW()),
 ('Jeepay ABA PayWay', 'jeepay_aba_pc', 'payment', '1.0.0', 1, '[]', NOW(), NOW(), NOW()),
 ('Jeepay PayPal', 'jeepay_paypal', 'payment', '1.0.0', 1, '[]', NOW(), NOW(), NOW()),
+('Jeepay Midtrans', 'jeepay_midtrans', 'payment', '1.0.0', 1, '[]', NOW(), NOW(), NOW()),
 ('TokenPay', 'token_pay', 'payment', '1.0.0', 1, '[]', NOW(), NOW(), NOW());
 ```
 
@@ -120,7 +122,18 @@ VALUES
 | 结算货币 | `USD` |
 | 人民币→美元汇率 | `0.14` |
 
-### 4）TokenPay
+### 4）JeepayMidtrans（Midtrans）
+
+| 配置项 | 示例 |
+|--------|------|
+| 支付接口 | JeepayMidtrans |
+| Jeepay支付网关 | `https://pay.free--china.com` |
+| mchNo / appId / appSecret | 从 https://payment.free--china.com/ 复制 |
+| wayCode | `MID_PC` |
+| 结算货币 | `IDR` |
+| 人民币→印尼盾汇率 | `2200`（1 CNY = 2200 IDR，可按牌价改） |
+
+### 5）TokenPay
 
 | 配置项 | 示例 |
 |--------|------|

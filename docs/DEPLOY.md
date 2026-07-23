@@ -130,6 +130,7 @@ php artisan route:clear
    - `jeepay_aba_qr`  
    - `jeepay_aba_pc`  
    - `jeepay_paypal`  
+   - `jeepay_midtrans`  
    - `token_pay`  
 3. **支付配置** → 添加支付方式：  
 
@@ -138,6 +139,7 @@ php artisan route:clear
 | 聚合支付-支付宝 | JeepayAbaQr | 网关 `https://pay.free--china.com` + 商户密钥 + 汇率 + 说明页 |
 | ABA PayWay | JeepayAbaPc | 同上网关 + 商户密钥、结算币 USD/KHR、汇率 |
 | PayPal | JeepayPaypal | 同上网关 + 商户密钥、CNY→USD 汇率 |
+| Midtrans | JeepayMidtrans | 同上网关 + 商户密钥、CNY→IDR 汇率（默认 2200） |
 | TokenPay USDT | TokenPay | 自备 TokenPay API 地址、密钥、币种 `USDT_TRC20` |
 
 **Jeepay 密钥从哪里拿：** 登录 **https://payment.free--china.com/** → 商户应用 → 复制 `mchNo` / `appId` / `appSecret`。
@@ -166,7 +168,7 @@ https://你的Xboard域名/aba-khqr-pay.html
 
 ## 5. 配套系统
 
-### 5.1 Jeepay（ABA / PayPal）——使用 FreeChina 已部署实例
+### 5.1 Jeepay（ABA / PayPal / Midtrans）——使用 FreeChina 已部署实例
 
 **无需自己再部署 Jeepay。** 直接对接：
 
@@ -178,7 +180,7 @@ https://你的Xboard域名/aba-khqr-pay.html
 操作步骤：
 
 1. 打开 [https://payment.free--china.com/](https://payment.free--china.com/) 登录商户后台  
-2. 确认通道已开通：`abakhqr`（ABA_KHQR）、`abapay`（ABA_PC）、`pppay`（PP_PC）  
+2. 确认通道已开通：`abakhqr`（ABA_KHQR）、`abapay`（ABA_PC）、`pppay`（PP_PC）、`midtrans`（MID_PC）  
 3. 在「商户应用」复制：  
    - `mchNo`  
    - `appId`  
@@ -186,7 +188,7 @@ https://你的Xboard域名/aba-khqr-pay.html
 4. 在 Xboard「支付配置」中填写：  
    - **Jeepay支付网关** = `https://pay.free--china.com`（不要末尾 `/`）  
    - 上述三个密钥  
-5. 按通道设置汇率（KHR / USD）  
+5. 按通道设置汇率（KHR / USD / IDR；Midtrans 默认 `cny_to_idr_rate=2200`）  
 
 个人 KHQR（`JeepayAbaQr`）还需手机监听 App + aba-bridge（与 FreeChina Jeepay 同一环境已对接）。
 
