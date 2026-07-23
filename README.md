@@ -96,15 +96,27 @@ freechina-xboard/
 
 ## 配套系统（完整收款能力）
 
-本发行版 **前端 + 面板** 可单独部署；若要使用 Jeepay / TokenPay 收款，还需自行准备：
+本发行版 **Xboard 面板** 可单独部署；支付走已部署好的 **FreeChina Jeepay**，不必自己再搭一套 Jeepay。
+
+### FreeChina Jeepay（已就绪，直接对接）
+
+| 用途 | 地址 | 说明 |
+|------|------|------|
+| **Jeepay 商户后台** | **https://payment.free--china.com/** | 登录后查看/配置商户、应用、通道（ABA / PayPal 等） |
+| **Jeepay 支付网关 API** | **https://pay.free--china.com** | Xboard 支付插件里的「Jeepay支付网关」填此地址（**无尾斜杠**） |
+
+在 Xboard「支付配置」中填写：
+
+- **Jeepay支付网关**：`https://pay.free--china.com`  
+- **mchNo / appId / appSecret**：到 [payment.free--china.com](https://payment.free--china.com/) 商户应用里复制  
 
 | 系统 | 用途 | 说明 |
 |------|------|------|
-| **Jeepay** | ABA / PayPal 等通道 | 需自行部署，配置商户 `mchNo` / `appId` / `appSecret` |
-| **ABA 个人桥 / aba-bridge** | 个人 KHQR 到账监听 | 配合 `JeepayAbaQr` |
-| **TokenPay** | USDT/TRX | 独立部署，填 API 地址与密钥 |
+| **Jeepay（FreeChina）** | ABA KHQR / ABA PayWay / PayPal | 使用上方已部署地址，**默认对接 payment.free--china.com** |
+| **ABA 个人桥 / aba-bridge** | 个人 KHQR 到账监听 | 配合 `JeepayAbaQr`（与 FreeChina Jeepay 同环境） |
+| **TokenPay** | USDT/TRX | 需自备 TokenPay 实例，在支付配置填 API 与密钥 |
 
-这些 **不包含在本仓库二进制里**，请按各自官方文档安装，再在 Xboard「支付配置」中填写地址与密钥。
+> 若你要使用**自己的** Jeepay，也可把网关改成你的域名；默认文档与插件示例均指向 FreeChina 现成服务。
 
 ---
 

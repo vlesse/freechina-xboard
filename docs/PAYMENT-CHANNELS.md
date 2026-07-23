@@ -30,14 +30,19 @@ Telegram：**[https://t.me/lngsuan](https://t.me/lngsuan)**
 
 ---
 
-## Jeepay 统一约定
+## Jeepay 统一约定（FreeChina 已部署）
 
-- 网关：`https://你的jeepay支付域名`  
-- 接口：`POST /api/pay/unifiedOrder`  
+| 项目 | 地址 |
+|------|------|
+| **商户后台** | **https://payment.free--china.com/** |
+| **支付网关**（插件 `gateway_url`） | **https://pay.free--china.com** |
+
+- 接口：`POST https://pay.free--china.com/api/pay/unifiedOrder`  
 - 签名：MD5 大写（Jeepay 官方算法）  
 - 异步通知：`state=2` 为成功  
+- 商户 `mchNo` / `appId` / `appSecret`：登录 [payment.free--china.com](https://payment.free--china.com/) 在商户应用中查看  
 
-商户侧需已配置对应 `if_code` 与 `way_code` 且启用。
+通道需在该 Jeepay 实例上已启用：`ABA_KHQR` / `ABA_PC` / `PP_PC`。
 
 ---
 

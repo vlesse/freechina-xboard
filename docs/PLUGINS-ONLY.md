@@ -82,13 +82,18 @@ VALUES
 
 **系统设置 → 支付配置 → 添加**
 
+> **默认对接 FreeChina 已部署的 Jeepay**  
+> - 商户后台：https://payment.free--china.com/  
+> - 支付网关：`https://pay.free--china.com`  
+> 密钥在 payment 后台「商户应用」中复制。
+
 ### 1）JeepayAbaQr（个人 KHQR）
 
 | 配置项 | 示例 |
 |--------|------|
 | 支付接口 | JeepayAbaQr |
-| Jeepay支付网关 | `https://pay.example.com` |
-| mchNo / appId / appSecret | Jeepay 商户应用 |
+| Jeepay支付网关 | `https://pay.free--china.com` |
+| mchNo / appId / appSecret | 从 https://payment.free--china.com/ 商户应用复制 |
 | wayCode | `ABA_KHQR` |
 | 人民币→瑞尔汇率 | `560` |
 | 金额说明页URL | `https://你的Xboard域名/aba-khqr-pay.html` |
@@ -98,6 +103,8 @@ VALUES
 | 配置项 | 示例 |
 |--------|------|
 | 支付接口 | JeepayAbaPc |
+| Jeepay支付网关 | `https://pay.free--china.com` |
+| mchNo / appId / appSecret | 从 https://payment.free--china.com/ 复制 |
 | wayCode | `ABA_PC` |
 | 结算货币 | `USD` 或 `KHR` |
 | 汇率 | USD 例 `0.14`；KHR 例 `560` |
@@ -107,6 +114,8 @@ VALUES
 | 配置项 | 示例 |
 |--------|------|
 | 支付接口 | JeepayPaypal |
+| Jeepay支付网关 | `https://pay.free--china.com` |
+| mchNo / appId / appSecret | 从 https://payment.free--china.com/ 复制 |
 | wayCode | `PP_PC` |
 | 结算货币 | `USD` |
 | 人民币→美元汇率 | `0.14` |

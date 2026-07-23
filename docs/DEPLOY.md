@@ -135,15 +135,17 @@ php artisan route:clear
 
 | 显示名称示例 | 支付接口 | 关键配置 |
 |--------------|----------|----------|
-| 聚合支付-支付宝 | JeepayAbaQr | Jeepay 网关、mchNo、appId、appSecret、汇率、说明页 URL |
-| ABA PayWay | JeepayAbaPc | Jeepay 网关、商户密钥、结算币 USD/KHR、汇率 |
-| PayPal | JeepayPaypal | Jeepay 网关、商户密钥、CNY→USD 汇率 |
-| TokenPay USDT | TokenPay | TokenPay API 地址、密钥、币种 `USDT_TRC20` |
+| 聚合支付-支付宝 | JeepayAbaQr | 网关 `https://pay.free--china.com` + 商户密钥 + 汇率 + 说明页 |
+| ABA PayWay | JeepayAbaPc | 同上网关 + 商户密钥、结算币 USD/KHR、汇率 |
+| PayPal | JeepayPaypal | 同上网关 + 商户密钥、CNY→USD 汇率 |
+| TokenPay USDT | TokenPay | 自备 TokenPay API 地址、密钥、币种 `USDT_TRC20` |
+
+**Jeepay 密钥从哪里拿：** 登录 **https://payment.free--china.com/** → 商户应用 → 复制 `mchNo` / `appId` / `appSecret`。
 
 说明页默认：
 
 ```text
-https://你的域名/aba-khqr-pay.html
+https://你的Xboard域名/aba-khqr-pay.html
 ```
 
 ---
@@ -164,26 +166,35 @@ https://你的域名/aba-khqr-pay.html
 
 ## 5. 配套系统
 
-### 5.1 Jeepay（ABA / PayPal）
+### 5.1 Jeepay（ABA / PayPal）——使用 FreeChina 已部署实例
 
-1. 部署 Jeepay（Docker 或源码）  
-2. 开通通道：`abakhqr` / `abapay` / `pppay`  
-3. 创建商户应用，拿到：  
+**无需自己再部署 Jeepay。** 直接对接：
+
+| 角色 | 地址 |
+|------|------|
+| 商户后台（登录配置通道） | **https://payment.free--china.com/** |
+| 支付网关（Xboard 插件 `gateway_url`） | **https://pay.free--china.com** |
+
+操作步骤：
+
+1. 打开 [https://payment.free--china.com/](https://payment.free--china.com/) 登录商户后台  
+2. 确认通道已开通：`abakhqr`（ABA_KHQR）、`abapay`（ABA_PC）、`pppay`（PP_PC）  
+3. 在「商户应用」复制：  
    - `mchNo`  
    - `appId`  
    - `appSecret`  
-4. 支付网关对外地址示例：`https://pay.example.com`  
-5. 填入 Xboard 对应支付配置  
+4. 在 Xboard「支付配置」中填写：  
+   - **Jeepay支付网关** = `https://pay.free--china.com`（不要末尾 `/`）  
+   - 上述三个密钥  
+5. 按通道设置汇率（KHR / USD）  
 
-个人 KHQR 还需：
+个人 KHQR（`JeepayAbaQr`）还需手机监听 App + aba-bridge（与 FreeChina Jeepay 同一环境已对接）。
 
-- aba-bridge 中转  
-- 手机监听 App  
-- 中转 `callbackUrl` 指向 Jeepay payment  
+> 若你坚持使用**自建 Jeepay**，把网关改成你自己的支付域名即可；本仓库默认文档与推荐配置均指向 **payment.free--china.com / pay.free--china.com**。
 
 ### 5.2 TokenPay
 
-1. 部署 [TokenPay](https://github.com/LightCountry/TokenPay)  
+1. 部署 [TokenPay](https://github.com/LightCountry/TokenPay)（或使用你已有的实例）  
 2. 配置异步通知密钥、收款地址  
 3. Xboard 支付配置填写 API 根地址（无尾斜杠）与密钥  
 
