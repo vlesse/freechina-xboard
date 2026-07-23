@@ -11,6 +11,7 @@ Telegram：**[https://t.me/lngsuan](https://t.me/lngsuan)**
 | JeepayAbaQr | 跳转说明页 + 扫固定 KHQR，手输瑞尔 | Xboard 人民币 → 换算 KHR | Jeepay `ABA_KHQR` |
 | JeepayAbaPc | 跳转 ABA 官方收银台 | 人民币 → USD/KHR | Jeepay `ABA_PC` |
 | JeepayPaypal | 跳转 PayPal | 人民币 → USD | Jeepay `PP_PC` |
+| JeepayMidtrans | 跳转 Midtrans 收银台 | 人民币 → IDR | Jeepay `MID_PC` |
 | TokenPay | 跳转 TokenPay 收银台 / 地址 | 人民币法币金额 | TokenPay `/CreateOrder` |
 
 ---
@@ -24,6 +25,7 @@ Telegram：**[https://t.me/lngsuan](https://t.me/lngsuan)**
 | ABA KHQR | `cny_to_khr_rate` | `560`（1 CNY = 560 KHR） |
 | ABA PayWay | `cny_to_settle_rate` + `settle_currency` | USD 用 `0.14`；KHR 用 `560` |
 | PayPal | `cny_to_usd_rate` | `0.14` |
+| Midtrans | `cny_to_idr_rate` | `2200`（1 CNY = 2200 IDR，按牌价改） |
 | TokenPay | 无 Xboard 汇率 | 法币金额 = 订单元；链上数量由 TokenPay 按自身行情计算 |
 
 **新订单**使用新汇率；已创建未支付订单不会自动重算。
@@ -42,7 +44,7 @@ Telegram：**[https://t.me/lngsuan](https://t.me/lngsuan)**
 - 异步通知：`state=2` 为成功  
 - 商户 `mchNo` / `appId` / `appSecret`：登录 [payment.free--china.com](https://payment.free--china.com/) 在商户应用中查看  
 
-通道需在该 Jeepay 实例上已启用：`ABA_KHQR` / `ABA_PC` / `PP_PC`。
+通道需在该 Jeepay 实例上已启用：`ABA_KHQR` / `ABA_PC` / `PP_PC` / `MID_PC`。
 
 ---
 

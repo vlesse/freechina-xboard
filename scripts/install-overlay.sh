@@ -40,6 +40,7 @@ if id www &>/dev/null; then
     "${XBOARD_DIR}/plugins-core/JeepayAbaQr" \
     "${XBOARD_DIR}/plugins-core/JeepayAbaPc" \
     "${XBOARD_DIR}/plugins-core/JeepayPaypal" \
+    "${XBOARD_DIR}/plugins-core/JeepayMidtrans" \
     "${XBOARD_DIR}/plugins-core/TokenPay" \
     "${XBOARD_DIR}/public/landing" \
     "${XBOARD_DIR}/public/aba-khqr-pay.html" \
@@ -49,6 +50,7 @@ elif id www-data &>/dev/null; then
     "${XBOARD_DIR}/plugins-core/JeepayAbaQr" \
     "${XBOARD_DIR}/plugins-core/JeepayAbaPc" \
     "${XBOARD_DIR}/plugins-core/JeepayPaypal" \
+    "${XBOARD_DIR}/plugins-core/JeepayMidtrans" \
     "${XBOARD_DIR}/plugins-core/TokenPay" \
     "${XBOARD_DIR}/public/landing" \
     "${XBOARD_DIR}/public/aba-khqr-pay.html" \
