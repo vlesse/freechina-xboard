@@ -215,7 +215,17 @@ docker compose up -d
 
 ---
 
-## 7. 验收清单
+## 7. 修改品牌 / FreeChina 标志
+
+部署完成后若要去掉 FreeChina 品牌、换成自己的：
+
+见 **[BRANDING.md](BRANDING.md)**（主站 / 登录 / 注册 HTML 路径、角标 FC、后台站点名、主题色）。
+
+主站默认文件：`public/landing/index.html`（Nord 风格模板二）。
+
+---
+
+## 8. 验收清单
 
 - [ ] 打开 `https://域名/` 看到 FreeChina 主站  
 - [ ] `/login` `/register` 为新 UI，可注册登录进入 `/dashboard`  
@@ -225,7 +235,7 @@ docker compose up -d
 
 ---
 
-## 8. 常见问题
+## 9. 常见问题
 
 **Q：打开 `/` 仍是旧登录页？**  
 A：确认已替换 `routes/web.php`，并 `php artisan optimize:clear`；浏览器强制刷新。
@@ -241,7 +251,7 @@ A：回调须返回纯文本 `ok`；本插件已处理。检查防火墙与 HTTP
 
 ---
 
-## 9. 支持
+## 10. 支持
 
 Telegram：**[https://t.me/lngsuan](https://t.me/lngsuan)**  
 欢迎部署反馈与定制需求。

@@ -18,6 +18,7 @@
 | [docs/DEPLOY.md](docs/DEPLOY.md) | **完整部署**（推荐）：一键脚本 + 手动步骤、环境要求、配套系统 |
 | [docs/PLUGINS-ONLY.md](docs/PLUGINS-ONLY.md) | **只装支付插件**：不用本仓库前端，只把 4 个支付通道接到你现有的 Xboard |
 | [docs/PAYMENT-CHANNELS.md](docs/PAYMENT-CHANNELS.md) | 各支付通道说明、汇率配置、回调注意点 |
+| [docs/BRANDING.md](docs/BRANDING.md) | **品牌 / 标志修改**：拉源码后 FreeChina、FC Logo 在哪里改 |
 
 ---
 
@@ -90,6 +91,29 @@ freechina-xboard/
 │   ├── install.sh            # 完整安装
 │   └── install-plugins-only.sh
 └── docker/                   # 可选 Docker 参考
+```
+
+---
+
+## 如何修改 FreeChina 标志 / 品牌名
+
+克隆本仓库后，**默认品牌为 FreeChina（角标 FC）**。若要换成自己的名称与 Logo：
+
+| 要改的内容 | 文件位置（安装后） |
+|------------|-------------------|
+| 官网顶栏 Logo 字 +「FC」 | `public/landing/index.html` 中 `.brand-logo` / 品牌文字 |
+| 登录页 Logo | `public/landing/login.html` 中 `.brand-mark` |
+| 注册页 Logo | `public/landing/register.html` 中 `.brand-mark` |
+| 浏览器标题、页脚版权 | 上述 HTML 的 `<title>`、页脚文案 |
+| 用户中心站点名 / Logo | **Xboard 管理后台 → 站点设置**（与落地页分开） |
+
+**完整说明（含换图片 Logo、改主题色、全文搜索关键词）：**  
+👉 **[docs/BRANDING.md](docs/BRANDING.md)**
+
+快速搜索：
+
+```bash
+grep -R "FreeChina\|brand-logo\|brand-mark" public/landing
 ```
 
 ---
