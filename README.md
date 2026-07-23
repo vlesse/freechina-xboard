@@ -49,12 +49,14 @@
 
 ```bash
 # 1. 克隆本仓库
-git clone https://github.com/<你的用户名>/freechina-xboard.git
+git clone https://github.com/vlesse/freechina-xboard.git
 cd freechina-xboard
 
 # 2. 一键安装（会克隆官方 Xboard 并打上本仓库 overlay）
 sudo bash scripts/install.sh
 ```
+
+仓库地址：https://github.com/vlesse/freechina-xboard  
 
 详细环境、域名、HTTPS、支付配置见 **[docs/DEPLOY.md](docs/DEPLOY.md)**。
 

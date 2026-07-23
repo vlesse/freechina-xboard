@@ -43,7 +43,7 @@
 
 ```bash
 # 以 root 或具备 sudo 的用户执行
-git clone https://github.com/<你的GitHub用户名>/freechina-xboard.git
+git clone https://github.com/vlesse/freechina-xboard.git
 cd freechina-xboard
 
 # 安装参数（可按需修改）
