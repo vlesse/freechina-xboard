@@ -1,0 +1,8 @@
+{
+    "name": "TokenPay",
+    "code": "token_pay",
+    "type": "payment",
+    "version": "1.0.0",
+    "description": "TokenPay 区块链支付（USDT-TRC20 / TRX 等），跳转收银台",
+    "author": "free-china"
+}

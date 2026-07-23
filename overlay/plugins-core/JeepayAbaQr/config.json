@@ -1,0 +1,8 @@
+{
+    "name": "Jeepay ABA KHQR",
+    "code": "jeepay_aba_qr",
+    "type": "payment",
+    "version": "1.0.0",
+    "description": "Xboard → Jeepay ABA 个人 KHQR 扫码；订单按人民币计价，自动换算瑞尔(KHR)下单",
+    "author": "free-china"
+}

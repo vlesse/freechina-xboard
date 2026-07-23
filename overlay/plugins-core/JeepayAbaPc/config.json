@@ -1,0 +1,8 @@
+{
+    "name": "Jeepay ABA PayWay",
+    "code": "jeepay_aba_pc",
+    "type": "payment",
+    "version": "1.0.0",
+    "description": "Xboard → Jeepay ABA 官方 PayWay 收银台；订单按人民币计价，自动换算后下单",
+    "author": "free-china"
+}

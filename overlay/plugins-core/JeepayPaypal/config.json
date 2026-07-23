@@ -1,0 +1,8 @@
+{
+    "name": "Jeepay PayPal",
+    "code": "jeepay_paypal",
+    "type": "payment",
+    "version": "1.0.0",
+    "description": "Xboard → Jeepay PayPal (PP_PC)；订单按人民币计价，自动换算 USD 后跳转 PayPal",
+    "author": "free-china"
+}

@@ -1,0 +1,41 @@
+# FreeChina Xboard — Docker 参考编排
+# 说明：Xboard 官方镜像/版本可能变化，此文件作结构参考。
+# 完整生产环境建议：宿主机 Nginx + PHP-FPM，或按官方 Docker 文档调整。
+#
+# 使用前请修改环境变量，并确保 overlay 已复制进 xboard 代码目录。
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: xboard
+      MYSQL_USER: xboard
+      MYSQL_PASSWORD: change_me_db
+      MYSQL_ROOT_PASSWORD: change_me_root
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  # 示例：将你构建好的 Xboard 代码挂载进来
+  # 需自行准备 Dockerfile 或使用官方镜像 + 挂载 overlay
+  # xboard:
+  #   build: .
+  #   restart: unless-stopped
+  #   depends_on: [mysql, redis]
+  #   ports: ["8080:80"]
+  #   volumes:
+  #     - ../overlay/plugins-core:/var/www/html/plugins-core-extra
+  #     - ../overlay/public/landing:/var/www/html/public/landing
+  #   environment:
+  #     DB_HOST: mysql
+  #     REDIS_HOST: redis
+
+volumes:
+  mysql_data:
+
+# 联系: https://t.me/lngsuan
