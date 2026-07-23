@@ -3,434 +3,651 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-  <meta name="description" content="FreeChina — 高速、安全、全球化的网络加速服务。Web3 友好，隐私优先。" />
-  <title>FreeChina · 全球网络加速</title>
+  <meta name="description" content="FreeChina — 隐私优先的全球网络加速。高速、安全、稳定，保护您的每一次连接。" />
+  <title>FreeChina · 隐私优先的全球加速</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #07090f;
-      --bg2: #0c101a;
-      --card: rgba(18, 22, 36, 0.72);
-      --border: rgba(255, 255, 255, 0.08);
-      --text: #eef2ff;
-      --muted: #94a3b8;
-      --cyan: #22d3ee;
-      --violet: #a78bfa;
-      --pink: #f472b6;
-      --green: #34d399;
-      --glow: 0 0 60px rgba(34, 211, 238, 0.15);
-      --radius: 20px;
-      --font: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-      --display: "Space Grotesk", "Inter", sans-serif;
+      --navy: #0b1220;
+      --navy-2: #121a2b;
+      --blue: #4687ff;
+      --blue-hover: #3471e8;
+      --blue-soft: #e8f0ff;
+      --text: #1b2333;
+      --text-inv: #ffffff;
+      --muted: #5b667a;
+      --muted-inv: #a8b3c7;
+      --border: #e6ebf2;
+      --card: #ffffff;
+      --bg: #f5f7fb;
+      --green: #1dbf73;
+      --radius: 16px;
+      --shadow: 0 12px 40px rgba(15, 30, 60, 0.08);
+      --shadow-lg: 0 24px 60px rgba(15, 30, 60, 0.12);
+      --font: "Inter", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+      --max: 1160px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
       font-family: var(--font);
-      background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
+      background: var(--bg);
       line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
     a { color: inherit; text-decoration: none; }
-    .mesh {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background:
-        radial-gradient(900px 500px at 10% -10%, rgba(167, 139, 250, 0.28), transparent 55%),
-        radial-gradient(700px 420px at 90% 10%, rgba(34, 211, 238, 0.18), transparent 50%),
-        radial-gradient(600px 400px at 50% 100%, rgba(244, 114, 182, 0.12), transparent 55%),
-        linear-gradient(180deg, #07090f 0%, #0a0e18 50%, #07090f 100%);
-    }
-    .grid-overlay {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.25;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 48px 48px;
-      mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
-    }
-    .wrap { position: relative; z-index: 1; }
-    .container { width: min(1120px, calc(100% - 2rem)); margin: 0 auto; }
+    img { max-width: 100%; display: block; }
+    .container { width: min(var(--max), calc(100% - 2.5rem)); margin: 0 auto; }
 
-    /* nav */
-    .nav {
-      position: sticky; top: 0; z-index: 50;
-      backdrop-filter: blur(16px) saturate(1.4);
-      background: rgba(7, 9, 15, 0.65);
-      border-bottom: 1px solid var(--border);
+    /* —— Header (Nord-like sticky white bar) —— */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(15, 30, 60, 0.06);
     }
-    .nav-inner {
-      display: flex; align-items: center; justify-content: space-between;
-      height: 68px;
+    .header-inner {
+      height: 72px;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
     }
     .brand {
       display: flex; align-items: center; gap: 10px;
-      font-family: var(--display); font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em;
+      font-weight: 800; font-size: 1.25rem; letter-spacing: -0.03em; color: var(--navy);
     }
-    .brand-mark {
-      width: 34px; height: 34px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--cyan), var(--violet));
-      box-shadow: 0 0 24px rgba(34, 211, 238, 0.35);
+    .brand-logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(145deg, #4687ff, #6aa0ff);
       display: grid; place-items: center;
-      font-size: 14px; font-weight: 800; color: #041016;
+      color: #fff; font-size: 12px; font-weight: 800;
+      box-shadow: 0 6px 16px rgba(70, 135, 255, 0.35);
     }
-    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
-    .nav-links a { color: var(--muted); font-size: 0.92rem; font-weight: 500; transition: color .2s; }
-    .nav-links a:hover { color: var(--text); }
+    .nav { display: flex; align-items: center; gap: 1.75rem; }
+    .nav a {
+      font-size: 0.95rem; font-weight: 500; color: var(--muted);
+      transition: color .15s;
+    }
+    .nav a:hover { color: var(--navy); }
+    .header-actions { display: flex; align-items: center; gap: 0.65rem; }
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      border: 0; cursor: pointer; font-weight: 600; font-size: 0.92rem;
-      border-radius: 999px; padding: 0.7rem 1.25rem;
-      transition: transform .15s ease, box-shadow .2s, background .2s, border-color .2s;
-      font-family: inherit;
+      font-family: inherit; font-weight: 700; font-size: 0.95rem;
+      border-radius: 999px; border: 0; cursor: pointer;
+      padding: 0.75rem 1.35rem;
+      transition: background .15s, transform .12s, box-shadow .15s, color .15s, border-color .15s;
     }
     .btn:active { transform: scale(0.98); }
-    .btn-ghost {
-      background: transparent; color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-ghost:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
     .btn-primary {
-      color: #ffffff !important;
-      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #9333ea 100%);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      box-shadow: 0 8px 28px rgba(124, 58, 237, 0.45);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-      font-weight: 700;
+      background: var(--blue); color: #fff;
+      box-shadow: 0 8px 20px rgba(70, 135, 255, 0.28);
     }
-    .btn-primary:hover {
-      box-shadow: 0 10px 36px rgba(124, 58, 237, 0.55);
-      filter: brightness(1.06);
+    .btn-primary:hover { background: var(--blue-hover); }
+    .btn-ghost {
+      background: transparent; color: var(--navy);
+      border: 1.5px solid var(--border);
     }
-    .btn-lg { padding: 0.9rem 1.6rem; font-size: 1rem; }
+    .btn-ghost:hover { border-color: #c9d4e6; background: #f8fafc; }
+    .btn-white {
+      background: #fff; color: var(--navy);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    .btn-white:hover { background: #f3f6fb; }
+    .btn-lg { padding: 0.95rem 1.7rem; font-size: 1.02rem; }
+    .menu-toggle {
+      display: none; width: 42px; height: 42px; border-radius: 10px;
+      border: 1px solid var(--border); background: #fff; cursor: pointer;
+    }
 
-    /* hero */
-    .hero { padding: 5.5rem 0 4rem; text-align: center; }
-    .pill {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 6px 14px; border-radius: 999px;
-      border: 1px solid rgba(34, 211, 238, 0.25);
-      background: rgba(34, 211, 238, 0.08);
-      color: var(--cyan); font-size: 0.82rem; font-weight: 600;
-      margin-bottom: 1.4rem;
+    /* —— Hero —— */
+    .hero {
+      position: relative;
+      background:
+        radial-gradient(900px 420px at 80% 20%, rgba(70, 135, 255, 0.22), transparent 55%),
+        radial-gradient(700px 380px at 10% 80%, rgba(70, 135, 255, 0.12), transparent 50%),
+        linear-gradient(165deg, #0b1220 0%, #15213a 48%, #1a2744 100%);
+      color: var(--text-inv);
+      padding: 4.5rem 0 5rem;
+      overflow: hidden;
     }
-    .pill-dot {
-      width: 7px; height: 7px; border-radius: 50%; background: var(--green);
-      box-shadow: 0 0 10px var(--green); animation: pulse 1.8s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.45; }
-    }
-    .hero h1 {
-      font-family: var(--display);
-      font-size: clamp(2.2rem, 5.5vw, 3.6rem);
-      line-height: 1.12; letter-spacing: -0.03em; font-weight: 700;
-      max-width: 16ch; margin: 0 auto 1.1rem;
-    }
-    .hero h1 .grad {
-      background: linear-gradient(120deg, #67e8f9, #c4b5fd 45%, #f9a8d4);
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-    .hero p.lead {
-      color: var(--muted); font-size: 1.08rem; max-width: 38rem;
-      margin: 0 auto 2rem;
-    }
-    .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 2.8rem; }
-    .stats {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-      max-width: 640px; margin: 0 auto;
-    }
-    .stat {
-      padding: 1rem 0.75rem; border-radius: 16px;
-      background: var(--card); border: 1px solid var(--border);
-      backdrop-filter: blur(10px);
-    }
-    .stat b {
-      display: block; font-family: var(--display); font-size: 1.45rem;
-      background: linear-gradient(90deg, var(--cyan), var(--violet));
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-    .stat span { color: var(--muted); font-size: 0.82rem; }
-
-    /* sections */
-    section { padding: 4.5rem 0; }
-    .section-head { text-align: center; margin-bottom: 2.5rem; }
-    .section-head h2 {
-      font-family: var(--display); font-size: clamp(1.6rem, 3vw, 2.2rem);
-      letter-spacing: -0.02em; margin-bottom: 0.6rem;
-    }
-    .section-head p { color: var(--muted); max-width: 36rem; margin: 0 auto; }
-
-    .features {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-    }
-    .feature {
-      position: relative; overflow: hidden;
-      padding: 1.5rem; border-radius: var(--radius);
-      background: var(--card); border: 1px solid var(--border);
-      backdrop-filter: blur(12px);
-      transition: border-color .2s, transform .2s;
-    }
-    .feature:hover { border-color: rgba(167, 139, 250, 0.35); transform: translateY(-3px); }
-    .feature::before {
-      content: ""; position: absolute; inset: auto -20% 60% -20%; height: 80px;
-      background: radial-gradient(circle, rgba(34, 211, 238, 0.12), transparent 70%);
+    .hero::after {
+      content: "";
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse at 70% 40%, black 10%, transparent 70%);
       pointer-events: none;
     }
-    .feature-icon {
-      width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
-      background: linear-gradient(135deg, rgba(34,211,238,0.15), rgba(167,139,250,0.15));
-      border: 1px solid var(--border); font-size: 1.2rem; margin-bottom: 1rem;
+    .hero-grid {
+      position: relative; z-index: 1;
+      display: grid; grid-template-columns: 1.15fr 0.85fr;
+      gap: 2.5rem; align-items: center;
     }
-    .feature h3 { font-size: 1.05rem; margin-bottom: 0.45rem; font-weight: 650; }
-    .feature p { color: var(--muted); font-size: 0.92rem; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.88rem; font-weight: 600; color: #9ec0ff;
+      background: rgba(70, 135, 255, 0.12);
+      border: 1px solid rgba(70, 135, 255, 0.25);
+      border-radius: 999px; padding: 6px 14px; margin-bottom: 1.25rem;
+    }
+    .eyebrow span {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+      box-shadow: 0 0 0 4px rgba(29, 191, 115, 0.2);
+    }
+    .hero h1 {
+      font-size: clamp(2.1rem, 4.6vw, 3.35rem);
+      line-height: 1.15; letter-spacing: -0.035em; font-weight: 800;
+      margin-bottom: 1.1rem; max-width: 14ch;
+    }
+    .hero .lead {
+      color: var(--muted-inv); font-size: 1.08rem; max-width: 34rem;
+      margin-bottom: 1.75rem;
+    }
+    .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 1.75rem; }
+    .trust-row {
+      display: flex; flex-wrap: wrap; gap: 1.25rem 1.75rem;
+      color: #c5d0e4; font-size: 0.9rem; font-weight: 500;
+    }
+    .trust-row b { color: #fff; font-weight: 700; }
+    .hero-card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-lg);
+    }
+    .hero-card h3 { font-size: 1.05rem; margin-bottom: 1rem; font-weight: 700; }
+    .check-list { list-style: none; display: grid; gap: 0.7rem; }
+    .check-list li {
+      display: flex; gap: 10px; align-items: flex-start;
+      color: #d7e0f0; font-size: 0.95rem;
+    }
+    .check-list i {
+      flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(29, 191, 115, 0.15); color: var(--green);
+      display: grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 800;
+      margin-top: 1px;
+    }
 
-    .how {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    /* —— Logo / social proof strip —— */
+    .strip {
+      background: #fff; border-bottom: 1px solid var(--border);
+      padding: 1.35rem 0;
+    }
+    .strip-inner {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 2.5rem;
+      color: var(--muted); font-size: 0.92rem; font-weight: 600;
+    }
+    .strip-inner span { opacity: 0.85; }
+
+    /* —— Sections —— */
+    section { padding: 4.75rem 0; }
+    .section-light { background: #fff; }
+    .section-muted { background: var(--bg); }
+    .section-dark {
+      background: linear-gradient(180deg, #0f1729 0%, #121c31 100%);
+      color: #fff;
+    }
+    .section-head {
+      text-align: center; max-width: 640px; margin: 0 auto 2.75rem;
+    }
+    .section-head h2 {
+      font-size: clamp(1.65rem, 3vw, 2.25rem);
+      letter-spacing: -0.03em; font-weight: 800; margin-bottom: 0.75rem;
+      color: inherit;
+    }
+    .section-head p { color: var(--muted); font-size: 1.05rem; }
+    .section-dark .section-head p { color: var(--muted-inv); }
+
+    .features {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
+    }
+    .feature {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.6rem 1.4rem;
+      box-shadow: var(--shadow);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .feature:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: var(--blue-soft); color: var(--blue);
+      display: grid; place-items: center; font-size: 1.35rem; margin-bottom: 1rem;
+    }
+    .feature h3 { font-size: 1.08rem; font-weight: 750; margin-bottom: 0.45rem; }
+    .feature p { color: var(--muted); font-size: 0.95rem; }
+
+    /* Why / split */
+    .split {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: center;
+    }
+    .split h2 {
+      font-size: clamp(1.55rem, 2.8vw, 2.1rem);
+      letter-spacing: -0.03em; font-weight: 800; margin-bottom: 0.85rem;
+    }
+    .split .desc { color: var(--muted); margin-bottom: 1.25rem; font-size: 1.02rem; }
+    .pill-stats {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .pill-stat {
+      background: #fff; border: 1px solid var(--border); border-radius: 14px;
+      padding: 1rem 1.1rem; box-shadow: var(--shadow);
+    }
+    .pill-stat b {
+      display: block; font-size: 1.45rem; color: var(--blue); font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .pill-stat span { color: var(--muted); font-size: 0.88rem; font-weight: 500; }
+    .illus {
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(70,135,255,0.2), transparent 45%),
+        linear-gradient(145deg, #eef3ff, #dfe9ff 50%, #f7f9fc);
+      border: 1px solid #d7e3ff;
+      min-height: 320px;
+      display: grid; place-items: center; padding: 2rem;
+      box-shadow: var(--shadow);
+    }
+    .illus-inner { text-align: center; max-width: 280px; }
+    .illus-globe {
+      width: 120px; height: 120px; margin: 0 auto 1rem; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #8eb6ff, #4687ff 45%, #1f4eb8);
+      box-shadow: 0 20px 40px rgba(70, 135, 255, 0.35), inset 0 0 30px rgba(255,255,255,0.2);
+      position: relative;
+    }
+    .illus-globe::after {
+      content: ""; position: absolute; inset: 18%;
+      border: 2px solid rgba(255,255,255,0.25); border-radius: 50%;
+    }
+
+    /* Steps */
+    .steps {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
     }
     .step {
-      padding: 1.35rem; border-radius: var(--radius);
-      border: 1px solid var(--border); background: rgba(12, 16, 26, 0.8);
-      text-align: left;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius); padding: 1.4rem 1.2rem;
     }
     .step-num {
-      font-family: var(--display); font-weight: 700; font-size: 0.85rem;
-      color: var(--cyan); margin-bottom: 0.6rem;
+      color: #7eb0ff; font-weight: 800; font-size: 0.85rem;
+      letter-spacing: 0.04em; margin-bottom: 0.65rem;
     }
-    .step h3 { font-size: 1rem; margin-bottom: 0.4rem; }
-    .step p { color: var(--muted); font-size: 0.88rem; }
+    .step h3 { font-size: 1.05rem; margin-bottom: 0.4rem; }
+    .step p { color: var(--muted-inv); font-size: 0.92rem; }
 
+    /* Pricing */
     .pricing {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-      align-items: stretch;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; align-items: stretch;
     }
     .price-card {
-      padding: 1.6rem; border-radius: calc(var(--radius) + 4px);
-      background: var(--card); border: 1px solid var(--border);
-      display: flex; flex-direction: column;
+      background: #fff; border: 1px solid var(--border); border-radius: 20px;
+      padding: 1.75rem 1.5rem; display: flex; flex-direction: column;
+      box-shadow: var(--shadow);
     }
     .price-card.featured {
-      border-color: rgba(167, 139, 250, 0.45);
-      box-shadow: var(--glow), 0 0 0 1px rgba(167, 139, 250, 0.12);
-      background: linear-gradient(180deg, rgba(30, 27, 55, 0.9), rgba(12, 16, 26, 0.95));
+      border: 2px solid var(--blue);
+      box-shadow: 0 16px 48px rgba(70, 135, 255, 0.18);
+      position: relative;
     }
-    .price-card .tag {
-      align-self: flex-start; font-size: 0.72rem; font-weight: 700;
-      padding: 3px 10px; border-radius: 999px; margin-bottom: 0.8rem;
-      background: rgba(167, 139, 250, 0.15); color: var(--violet);
+    .price-card .badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--blue); color: #fff; font-size: 0.75rem; font-weight: 700;
+      padding: 4px 12px; border-radius: 999px; white-space: nowrap;
     }
-    .price-card h3 { font-size: 1.15rem; margin-bottom: 0.35rem; }
+    .price-card h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .price-card .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem; }
     .price-card .price {
-      font-family: var(--display); font-size: 2rem; font-weight: 700;
-      margin: 0.6rem 0 1rem;
+      font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1.1rem;
     }
-    .price-card .price small { font-size: 0.9rem; color: var(--muted); font-weight: 500; }
-    .price-card ul { list-style: none; flex: 1; margin-bottom: 1.25rem; }
+    .price-card .price small { font-size: 0.95rem; color: var(--muted); font-weight: 600; }
+    .price-card ul { list-style: none; flex: 1; margin-bottom: 1.35rem; }
     .price-card li {
-      color: var(--muted); font-size: 0.9rem; padding: 0.35rem 0;
-      display: flex; gap: 8px; align-items: flex-start;
+      display: flex; gap: 8px; padding: 0.38rem 0;
+      color: var(--muted); font-size: 0.92rem;
     }
-    .price-card li::before { content: "✓"; color: var(--green); font-weight: 700; }
+    .price-card li::before {
+      content: "✓"; color: var(--green); font-weight: 800;
+    }
 
-    .cta-band {
-      margin: 1rem 0 3rem;
-      padding: 2.5rem 2rem; border-radius: 28px; text-align: center;
-      border: 1px solid rgba(255,255,255,0.1);
+    /* FAQ */
+    .faq { max-width: 760px; margin: 0 auto; display: grid; gap: 10px; }
+    details.faq-item {
+      background: #fff; border: 1px solid var(--border); border-radius: 14px;
+      padding: 1rem 1.2rem; box-shadow: 0 4px 16px rgba(15,30,60,0.04);
+    }
+    details.faq-item summary {
+      cursor: pointer; font-weight: 700; list-style: none;
+      display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    }
+    details.faq-item summary::-webkit-details-marker { display: none; }
+    details.faq-item summary::after { content: "+"; color: var(--blue); font-size: 1.25rem; font-weight: 500; }
+    details.faq-item[open] summary::after { content: "−"; }
+    details.faq-item p { color: var(--muted); margin-top: 0.75rem; font-size: 0.95rem; }
+
+    /* CTA band */
+    .cta {
+      padding: 4rem 0 4.5rem;
       background:
-        radial-gradient(500px 200px at 20% 0%, rgba(34, 211, 238, 0.15), transparent),
-        radial-gradient(500px 200px at 80% 100%, rgba(167, 139, 250, 0.18), transparent),
-        rgba(14, 18, 30, 0.9);
+        radial-gradient(600px 240px at 50% 0%, rgba(70,135,255,0.25), transparent 60%),
+        linear-gradient(180deg, #0b1220, #15213a);
+      color: #fff; text-align: center;
     }
-    .cta-band h2 { font-family: var(--display); font-size: 1.8rem; margin-bottom: 0.6rem; }
-    .cta-band p { color: var(--muted); margin-bottom: 1.4rem; }
+    .cta h2 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800;
+      letter-spacing: -0.03em; margin-bottom: 0.7rem;
+    }
+    .cta p { color: var(--muted-inv); margin-bottom: 1.5rem; font-size: 1.05rem; }
 
+    /* Footer */
     footer {
-      border-top: 1px solid var(--border);
-      padding: 2rem 0 2.5rem; color: var(--muted); font-size: 0.85rem;
+      background: #0a101c; color: #8b97ad; padding: 2.5rem 0 2rem; font-size: 0.9rem;
     }
     .footer-inner {
-      display: flex; flex-wrap: wrap; gap: 1rem;
-      justify-content: space-between; align-items: center;
+      display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1.25rem;
+      align-items: center;
     }
-    .footer-links { display: flex; gap: 1.2rem; }
-    .footer-links a:hover { color: var(--text); }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 1.1rem; }
+    .footer-links a:hover { color: #fff; }
+    .footer-brand { color: #fff; font-weight: 800; letter-spacing: -0.02em; }
 
-    @media (max-width: 900px) {
-      .features, .pricing, .how { grid-template-columns: 1fr; }
-      .nav-links .hide-sm { display: none; }
-      .stats { grid-template-columns: 1fr; }
+    @media (max-width: 960px) {
+      .hero-grid, .split, .features, .pricing, .steps { grid-template-columns: 1fr; }
+      .nav { display: none; }
+      .nav.open {
+        display: flex; flex-direction: column; position: absolute;
+        top: 72px; left: 0; right: 0; background: #fff;
+        border-bottom: 1px solid var(--border); padding: 1rem 1.25rem 1.25rem;
+        gap: 1rem; box-shadow: var(--shadow);
+      }
+      .nav.open a { color: var(--navy); }
+      .menu-toggle { display: inline-grid; place-items: center; }
+      .header-inner { position: relative; }
+      .hero { padding: 3rem 0 3.5rem; }
+      .hero h1 { max-width: none; }
+      .header-actions .btn-ghost { display: none; }
     }
   </style>
 </head>
 <body>
-  <div class="mesh"></div>
-  <div class="grid-overlay"></div>
-  <div class="wrap">
-    <header class="nav">
-      <div class="container nav-inner">
-        <a class="brand" href="/">
-          <span class="brand-mark">FC</span>
-          <span>FreeChina</span>
-        </a>
-        <nav class="nav-links">
-          <a class="hide-sm" href="#features">特性</a>
-          <a class="hide-sm" href="#how">使用流程</a>
-          <a class="hide-sm" href="#pricing">套餐</a>
-          <a class="btn btn-ghost" href="/login">登录</a>
-          <a class="btn btn-primary" href="/register">立即开始</a>
-        </nav>
+  <!-- 模板二：Nord 风格（模板一见 index-v1.html） -->
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-logo">FC</span>
+        FreeChina
+      </a>
+      <button class="menu-toggle" id="menuBtn" aria-label="菜单" type="button">☰</button>
+      <nav class="nav" id="nav">
+        <a href="#features">功能</a>
+        <a href="#why">为何选择</a>
+        <a href="#pricing">套餐</a>
+        <a href="#faq">常见问题</a>
+      </nav>
+      <div class="header-actions">
+        <a class="btn btn-ghost" href="/login">登录</a>
+        <a class="btn btn-primary" href="/register">立即开始</a>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      <section class="hero container">
-        <div class="pill"><span class="pill-dot"></span> 全球节点在线 · 低延迟加速</div>
-        <h1>重新定义你的<br /><span class="grad">网络边界</span></h1>
-        <p class="lead">
-          FreeChina 提供企业级加密通道与全球优质线路，兼顾速度、稳定与隐私。
-          支持多端同步，适合跨境办公、内容访问与 Web3 场景。
-        </p>
-        <div class="hero-cta">
-          <a class="btn btn-primary btn-lg" href="/register">免费注册体验</a>
-          <a class="btn btn-ghost btn-lg" href="/login">已有账号登录</a>
-        </div>
-        <div class="stats">
-          <div class="stat"><b>50+</b><span>全球加速节点</span></div>
-          <div class="stat"><b>99.9%</b><span>服务可用性</span></div>
-          <div class="stat"><b>&lt;30ms</b><span>优质线路延迟*</span></div>
-        </div>
-      </section>
-
-      <section id="features">
-        <div class="container">
-          <div class="section-head">
-            <h2>为速度与隐私而生</h2>
-            <p>从底层协议到节点调度，围绕「快、稳、安全」打磨每一次连接体验。</p>
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="eyebrow"><span></span> 全球节点在线 · 隐私优先</div>
+          <h1>隐私优先的全球网络加速</h1>
+          <p class="lead">
+            FreeChina 为您提供高速加密通道与全球优质线路。保护在线隐私，畅享跨境协作、影音娱乐与 Web3 访问，一处订阅，多端同步。
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary btn-lg" href="/register">获取 FreeChina</a>
+            <a class="btn btn-white btn-lg" href="/login">已有账号登录</a>
           </div>
-          <div class="features">
-            <article class="feature">
-              <div class="feature-icon">⚡</div>
-              <h3>智能线路调度</h3>
-              <p>实时优选低延迟节点，高峰时段自动分流，刷视频、会议、下载更流畅。</p>
-            </article>
-            <article class="feature">
-              <div class="feature-icon">🔐</div>
-              <h3>军工级加密隧道</h3>
-              <p>全链路加密传输，隐藏真实 IP，有效降低中间人窃听与公共 Wi‑Fi 风险。</p>
-            </article>
-            <article class="feature">
-              <div class="feature-icon">🌐</div>
-              <h3>全球节点覆盖</h3>
-              <p>亚太、欧美等多区域节点可选，跨境协作与内容访问更从容。</p>
-            </article>
-            <article class="feature">
-              <div class="feature-icon">📱</div>
-              <h3>多端一键同步</h3>
-              <p>Windows / macOS / iOS / Android / 路由 多平台订阅，一处购买多处使用。</p>
-            </article>
-            <article class="feature">
-              <div class="feature-icon">🛡</div>
-              <h3>隐私优先策略</h3>
-              <p>严格最小化日志策略，只保留必要的服务与安全审计数据。</p>
-            </article>
-            <article class="feature">
-              <div class="feature-icon">🧩</div>
-              <h3>Web3 友好</h3>
-              <p>适配 DApp、链上交互与跨境 API 访问场景，连接更稳定少中断。</p>
-            </article>
+          <div class="trust-row">
+            <div><b>50+</b> 全球加速节点</div>
+            <div><b>99.9%</b> 服务可用性</div>
+            <div><b>多平台</b> 一键订阅同步</div>
           </div>
         </div>
-      </section>
+        <aside class="hero-card">
+          <h3>选择 FreeChina，您将获得</h3>
+          <ul class="check-list">
+            <li><i>✓</i><span>军工级加密隧道，隐藏真实 IP</span></li>
+            <li><i>✓</i><span>智能线路调度，高峰依旧流畅</span></li>
+            <li><i>✓</i><span>Windows / macOS / iOS / Android 全覆盖</span></li>
+            <li><i>✓</i><span>严格最小化日志，隐私优先</span></li>
+            <li><i>✓</i><span>支持 ABA / PayPal / USDT 等多种支付</span></li>
+          </ul>
+        </aside>
+      </div>
+    </section>
 
-      <section id="how">
-        <div class="container">
-          <div class="section-head">
-            <h2>四步开启加速</h2>
-            <p>注册到连上，全程不到两分钟。</p>
-          </div>
-          <div class="how">
-            <div class="step"><div class="step-num">01</div><h3>注册账号</h3><p>邮箱注册，秒级开通服务。</p></div>
-            <div class="step"><div class="step-num">02</div><h3>选择套餐</h3><p>按流量与时长灵活选购。</p></div>
-            <div class="step"><div class="step-num">03</div><h3>导入订阅</h3><p>一键复制订阅到客户端。</p></div>
-            <div class="step"><div class="step-num">04</div><h3>连接节点</h3><p>选择线路，即刻安全上网。</p></div>
-          </div>
-        </div>
-      </section>
+    <div class="strip">
+      <div class="container strip-inner">
+        <span>🔒 全链路加密</span>
+        <span>🌍 亚太 · 欧美节点</span>
+        <span>⚡ 低延迟优选</span>
+        <span>📱 多设备同时在线</span>
+        <span>🛡 公共 Wi‑Fi 防护</span>
+      </div>
+    </div>
 
-      <section id="pricing">
-        <div class="container">
-          <div class="section-head">
-            <h2>透明套餐，按需选择</h2>
-            <p>登录后可查看完整套餐与实时价格，支持多种支付方式。</p>
-          </div>
-          <div class="pricing">
-            <div class="price-card">
-              <h3>入门体验</h3>
-              <p style="color:var(--muted);font-size:0.9rem">轻度浏览与学习</p>
-              <div class="price">体验价 <small>/ 起</small></div>
-              <ul>
-                <li>基础全球节点</li>
-                <li>标准带宽保障</li>
-                <li>最多 2 台设备</li>
-                <li>邮件工单支持</li>
-              </ul>
-              <a class="btn btn-ghost" href="/login" style="width:100%">登录查看</a>
-            </div>
-            <div class="price-card featured">
-              <div class="tag">最受欢迎</div>
-              <h3>专业加速</h3>
-              <p style="color:var(--muted);font-size:0.9rem">办公娱乐两不误</p>
-              <div class="price">超值 <small>/ 推荐</small></div>
-              <ul>
-                <li>全部优质线路</li>
-                <li>更高速率与稳定性</li>
-                <li>更多同时在线设备</li>
-                <li>优先客服响应</li>
-              </ul>
-              <a class="btn btn-primary" href="/register" style="width:100%">立即订阅</a>
-            </div>
-            <div class="price-card">
-              <h3>旗舰无限</h3>
-              <p style="color:var(--muted);font-size:0.9rem">重度与团队场景</p>
-              <div class="price">旗舰 <small>/ 尊享</small></div>
-              <ul>
-                <li>专线级节点资源</li>
-                <li>大流量/长周期</li>
-                <li>多设备全家桶</li>
-                <li>专属支持通道</li>
-              </ul>
-              <a class="btn btn-ghost" href="/login" style="width:100%">登录选购</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
+    <section class="section-light" id="features">
       <div class="container">
-        <div class="cta-band">
-          <h2>准备好进入下一代网络体验了吗？</h2>
-          <p>加入 FreeChina，用更优雅的方式连接世界。</p>
-          <a class="btn btn-primary btn-lg" href="/register">创建开始使用</a>
+        <div class="section-head">
+          <h2>一站式安全与加速能力</h2>
+          <p>从隐私保护到跨境访问，FreeChina 覆盖日常办公与娱乐的核心场景。</p>
+        </div>
+        <div class="features">
+          <article class="feature">
+            <div class="feature-icon">🔐</div>
+            <h3>强大的隐私保护</h3>
+            <p>加密隧道保护流量，避免公共网络窥探与中间人攻击，浏览更安心。</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">⚡</div>
+            <h3>高速智能线路</h3>
+            <p>实时优选低延迟节点，视频会议、4K 影音与大文件传输更稳定。</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">🌐</div>
+            <h3>全球节点覆盖</h3>
+            <p>多区域节点随选随连，满足跨境协作、内容访问与差旅上网需求。</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">🛡</div>
+            <h3>威胁防护思路</h3>
+            <p>隔离不安全连接风险，降低恶意广告与跟踪带来的干扰（按客户端能力）。</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">📱</div>
+            <h3>多设备无用</h3>
+            <p>一次订阅，电脑与手机同步配置，家人同事可按套餐设备数共享使用。</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">🧩</div>
+            <h3>Web3 友好</h3>
+            <p>适配 DApp、链上交互与跨境 API，连接更稳、中断更少。</p>
+          </article>
         </div>
       </div>
-    </main>
+    </section>
 
-    <footer>
-      <div class="container footer-inner">
-        <div>© <span id="y"></span> FreeChina · free--china.com</div>
-        <div class="footer-links">
-          <a href="/login">用户中心</a>
-          <a href="/register">注册</a>
-          <a href="#features">特性</a>
+    <section class="section-muted" id="why">
+      <div class="container split">
+        <div>
+          <h2>为什么超过众多用户选择我们</h2>
+          <p class="desc">
+            FreeChina 专注「快、稳、安全」三件事：优质节点资源、清晰套餐与多种本地/国际支付方式，让加速服务像用水电一样简单。
+          </p>
+          <div class="pill-stats">
+            <div class="pill-stat"><b>50+</b><span>全球加速节点</span></div>
+            <div class="pill-stat"><b>99.9%</b><span>目标可用性</span></div>
+            <div class="pill-stat"><b>&lt;30ms</b><span>优质线路延迟*</span></div>
+            <div class="pill-stat"><b>7×24</b><span>工单支持</span></div>
+          </div>
+        </div>
+        <div class="illus">
+          <div class="illus-inner">
+            <div class="illus-globe" aria-hidden="true"></div>
+            <p style="font-weight:800;color:var(--navy);margin-bottom:0.35rem;">连接世界，保护自己</p>
+            <p style="color:var(--muted);font-size:0.92rem;">一键连接，加密保护从按下按钮那一刻开始。</p>
+          </div>
         </div>
       </div>
-    </footer>
-  </div>
+    </section>
+
+    <section class="section-dark" id="how">
+      <div class="container">
+        <div class="section-head">
+          <h2>三步开始使用</h2>
+          <p>注册、订阅、导入客户端，全程通常不到两分钟。</p>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">第 1 步</div>
+            <h3>创建账号</h3>
+            <p>邮箱注册，立即开通用户中心。</p>
+          </div>
+          <div class="step">
+            <div class="step-num">第 2 步</div>
+            <h3>选择套餐</h3>
+            <p>按流量与周期选购，支持多种支付。</p>
+          </div>
+          <div class="step">
+            <div class="step-num">第 3 步</div>
+            <h3>导入订阅</h3>
+            <p>复制订阅链接到客户端一键导入。</p>
+          </div>
+          <div class="step">
+            <div class="step-num">第 4 步</div>
+            <h3>连接节点</h3>
+            <p>选择线路，开始安全高速上网。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-light" id="pricing">
+      <div class="container">
+        <div class="section-head">
+          <h2>透明灵活的套餐</h2>
+          <p>登录后可查看实时价格与完整权益。以下为方案示意，以用户中心为准。</p>
+        </div>
+        <div class="pricing">
+          <div class="price-card">
+            <h3>入门体验</h3>
+            <p class="sub">轻度浏览与学习</p>
+            <div class="price">体验价 <small>/ 起</small></div>
+            <ul>
+              <li>基础全球节点</li>
+              <li>标准带宽</li>
+              <li>少量设备同时在线</li>
+              <li>邮件工单支持</li>
+            </ul>
+            <a class="btn btn-ghost" href="/login" style="width:100%">登录查看</a>
+          </div>
+          <div class="price-card featured">
+            <div class="badge">最受欢迎</div>
+            <h3>专业加速</h3>
+            <p class="sub">办公娱乐两不误</p>
+            <div class="price">超值 <small>/ 推荐</small></div>
+            <ul>
+              <li>全部优质线路</li>
+              <li>更高速率与稳定性</li>
+              <li>更多同时在线设备</li>
+              <li>优先客服响应</li>
+            </ul>
+            <a class="btn btn-primary" href="/register" style="width:100%">获取 FreeChina</a>
+          </div>
+          <div class="price-card">
+            <h3>旗舰尊享</h3>
+            <p class="sub">重度与多设备场景</p>
+            <div class="price">旗舰 <small>/ 尊享</small></div>
+            <ul>
+              <li>专线级节点资源</li>
+              <li>大流量 / 长周期</li>
+              <li>多设备全家桶</li>
+              <li>专属支持通道</li>
+            </ul>
+            <a class="btn btn-ghost" href="/login" style="width:100%">登录选购</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-muted" id="faq">
+      <div class="container">
+        <div class="section-head">
+          <h2>常见问题</h2>
+          <p>部署与支付相关问题可联系我们的 Telegram 支持。</p>
+        </div>
+        <div class="faq">
+          <details class="faq-item">
+            <summary>FreeChina 适合哪些人？</summary>
+            <p>适合需要跨境办公、稳定访问海外内容、保护公共网络隐私，以及 Web3 / API 跨境访问的用户。</p>
+          </details>
+          <details class="faq-item">
+            <summary>支持哪些支付方式？</summary>
+            <p>支持 ABA 扫码、ABA PayWay 收银台、PayPal、TokenPay（USDT 等），以用户中心当前开启的通道为准。</p>
+          </details>
+          <details class="faq-item">
+            <summary>可以在多台设备上使用吗？</summary>
+            <p>可以。具体同时在线设备数取决于您购买的套餐，登录用户中心即可查看。</p>
+          </details>
+          <details class="faq-item">
+            <summary>忘记密码怎么办？</summary>
+            <p>在登录页点击「忘记密码」，按提示通过邮箱重置即可。</p>
+          </details>
+          <details class="faq-item">
+            <summary>如何获得技术支持？</summary>
+            <p>可在用户中心提交工单，或通过 Telegram 联系：https://t.me/lngsuan</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="container">
+        <h2>立即开启更安全的网络体验</h2>
+        <p>注册账号，选择套餐，几分钟内完成配置。</p>
+        <a class="btn btn-primary btn-lg" href="/register">获取 FreeChina</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <div>
+        <div class="footer-brand">FreeChina</div>
+        <div style="margin-top:0.35rem">© <span id="y"></span> free--china.com · 隐私优先的全球加速</div>
+      </div>
+      <div class="footer-links">
+        <a href="/login">登录</a>
+        <a href="/register">注册</a>
+        <a href="#features">功能</a>
+        <a href="#pricing">套餐</a>
+        <a href="https://t.me/lngsuan" target="_blank" rel="noopener">Telegram</a>
+      </div>
+    </div>
+  </footer>
+
   <script>
     document.getElementById('y').textContent = new Date().getFullYear();
+    var btn = document.getElementById('menuBtn');
+    var nav = document.getElementById('nav');
+    if (btn && nav) {
+      btn.addEventListener('click', function () {
+        nav.classList.toggle('open');
+      });
+    }
   </script>
 </body>
 </html>
