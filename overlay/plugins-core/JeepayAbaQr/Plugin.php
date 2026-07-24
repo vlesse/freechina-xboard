@@ -188,12 +188,24 @@ class Plugin extends AbstractPlugin implements PaymentInterface
         // 用户必须手输的金额：优先中转 expectAmount（含尾数），否则整数瑞尔
         $payKhr = $expectAmount !== '' ? $expectAmount : (string) $khrMajor;
 
+        // 支付成功后说明页轮询到账并跳回订单页
+        $returnUrl = (string) ($order['return_url'] ?? '');
+        if ($returnUrl === '') {
+            // Xboard 用户中心订单详情（hash 路由）
+            $host = '';
+            if (!empty($order['notify_url']) && preg_match('#^(https?://[^/]+)#', (string) $order['notify_url'], $hm)) {
+                $host = $hm[1];
+            }
+            $returnUrl = ($host !== '' ? $host : '') . '/#/order/' . $order['trade_no'];
+        }
+
         $query = [
             'cny' => $this->fmtMoney($cny),
             'khr' => (string) $khrMajor,
             'rate' => (string) $rate,
             'qr' => $qrContent,
             'trade' => (string) $order['trade_no'],
+            'return' => $returnUrl,
         ];
         if ($expectAmount !== '') {
             $query['expect'] = $expectAmount;

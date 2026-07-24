@@ -77,7 +77,7 @@
       margin-left: 4px;
       color: #ff7875;
     }
-    .copy-btn {
+    .copy-btn, .status-btn {
       margin-top: 12px;
       width: 100%;
       border: 0;
@@ -89,7 +89,11 @@
       font-weight: 700;
       cursor: pointer;
     }
-    .copy-btn:active { opacity: .9; }
+    .status-btn {
+      background: var(--accent);
+      margin-top: 8px;
+    }
+    .copy-btn:active, .status-btn:active { opacity: .9; }
     .hint-ok {
       display: none;
       margin-top: 8px;
@@ -97,6 +101,14 @@
       color: var(--ok);
       font-size: 13px;
     }
+    .pay-status {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--warn);
+      min-height: 22px;
+    }
+    .pay-status.ok { color: var(--ok); font-weight: 700; }
     .qr-wrap {
       display: flex;
       justify-content: center;
@@ -159,6 +171,28 @@
       border-radius: 12px;
       margin-top: 16px;
     }
+    .success-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.72);
+      z-index: 99;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .success-overlay.show { display: flex; }
+    .success-box {
+      background: var(--card);
+      border: 1px solid var(--ok);
+      border-radius: 16px;
+      padding: 28px 22px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+    }
+    .success-box h2 { margin: 0 0 8px; color: var(--ok); font-size: 22px; }
+    .success-box p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -178,6 +212,8 @@
         </div>
         <button class="copy-btn" type="button" id="copyBtn">一键复制瑞尔金额</button>
         <div class="hint-ok" id="copied">已复制，请粘贴到支付宝付款金额框</div>
+        <div class="pay-status" id="payStatus">正在等待支付到账…</div>
+        <button class="status-btn" type="button" id="openOrderBtn" style="display:none">查看订单</button>
       </div>
 
       <div class="card">
@@ -198,9 +234,9 @@
 
       <div class="warn">
         <strong>务必注意：</strong><br>
-        1. 金额币种是 <strong>瑞尔（KHR）</strong>，不要输入人民币数字（例如不要输 74）。<br>
-        2. 数字必须与上方完全一致（含小数点若有），否则系统无法自动确认到账。<br>
-        3. 付款成功后请返回订单页，等待状态变为「已支付」。
+        1. 金额币种是 <strong>瑞尔（KHR）</strong>，不要输入人民币数字。<br>
+        2. 数字必须与上方完全一致（瑞尔为整数）。<br>
+        3. 付款成功后本页会<strong>自动检测并跳转</strong>到订单成功页，请稍候几秒。
       </div>
 
       <div class="card">
@@ -210,7 +246,7 @@
           <li>打开支付宝 App，扫描上方二维码</li>
           <li>在金额输入框粘贴 / 输入瑞尔金额</li>
           <li>确认币种为 KHR 后完成支付</li>
-          <li>返回网站订单页等待自动到账</li>
+          <li>回到本页等待自动跳转（也可点「查看订单」）</li>
         </ol>
       </div>
 
@@ -220,6 +256,13 @@
     <div id="error" class="err" style="display:none"></div>
   </div>
 
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-box">
+      <h2>支付成功</h2>
+      <p id="successMsg">订单已确认到账，正在跳转…</p>
+    </div>
+  </div>
+
   <script>
     function qs(name) {
       const u = new URL(location.href);
@@ -227,22 +270,119 @@
     }
     function formatNum(s) {
       if (!s) return '-';
-      // keep decimals if present
       if (s.indexOf('.') >= 0) return s;
-      try {
-        return Number(s).toLocaleString('en-US');
-      } catch (e) {
-        return s;
+      try { return Number(s).toLocaleString('en-US'); } catch (e) { return s; }
+    }
+    function getCookie(name) {
+      const parts = (';cookie || '').split(';');
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i].trim();
+        if (p.indexOf(name + '=') === 0) {
+          return decodeURIComponent(p.substring(name.length + 1));
+        }
       }
+      return '';
+    }
+    function getAuthToken() {
+      // Xboard 前端：PN(e){sd.set("access_token",e,...)}
+      let t = getCookie('access_token');
+      if (t) return t;
+      try {
+        t = localStorage.getItem('access_token')
+          || sessionStorage.getItem('access_token')
+          || localStorage.getItem('authorization')
+          || '';
+      } catch (e) {}
+      return t || '';
+    }
+    function defaultReturnUrl(tradeNo) {
+      if (!tradeNo) return location.origin + '/#/dashboard';
+      return location.origin + '/#/order/' + encodeURIComponent(tradeNo);
     }
 
     const qr = qs('qr');
     const cny = qs('cny');
     const khr = qs('khr');
     const rate = qs('rate');
-    const expect = qs('expect'); // optional tail amount from relay
+    const expect = qs('expect');
     const trade = qs('trade');
+    const returnUrl = qs('return') || defaultReturnUrl(trade);
     const payKhr = expect || khr;
+
+    const statusEl = document.getElementById('payStatus');
+    const openBtn = document.getElementById('openOrderBtn');
+    let paid = false;
+    let pollTimer = null;
+
+    function goOrder() {
+      try {
+        window.location.replace(returnUrl);
+      } catch (e) {
+        window.location.href = returnUrl;
+      }
+    }
+
+    function markPaid() {
+      if (paid) return;
+      paid = true;
+      if (pollTimer) clearInterval(pollTimer);
+      statusEl.className = 'pay-status ok';
+      statusEl.textContent = '支付成功！即将返回订单页…';
+      openBtn.style.display = 'block';
+      openBtn.textContent = '立即查看订单';
+      document.getElementById('successOverlay').classList.add('show');
+      setTimeout(goOrder, 1500);
+    }
+
+    async function checkOrderOnce() {
+      if (!trade || paid) return;
+      const token = getAuthToken();
+      if (!token) {
+        statusEl.textContent = '未检测到登录状态，付完款后请点「查看订单」或返回用户中心';
+        openBtn.style.display = 'block';
+        return;
+      }
+      try {
+        const url = '/api/v1/user/order/check?trade_no=' + encodeURIComponent(trade);
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': token,
+            'Accept': 'application/json'
+          },
+          credentials: 'same-origin'
+        });
+        const json = await res.json().catch(function () { return null; });
+        // Xboard: { data: status }  status 0待支付 1开通中 3已完成
+        let st = null;
+        if (json && typeof json.data !== 'undefined') st = json.data;
+        if (st === 1 || st === 3 || st === '1' || st === '3') {
+          markPaid();
+          return;
+        }
+        if (st === 0 || st === '0') {
+          statusEl.textContent = '等待支付到账中…（到账后自动跳转）';
+        } else if (st === 2 || st === '2') {
+          statusEl.textContent = '订单已取消，请返回重新下单';
+          if (pollTimer) clearInterval(pollTimer);
+        }
+      } catch (e) {
+        // 静默，下一轮再试
+      }
+    }
+
+    function startPolling() {
+      openBtn.style.display = 'block';
+      openBtn.textContent = '已付款？查看订单';
+      openBtn.addEventListener('click', goOrder);
+      checkOrderOnce();
+      pollTimer = setInterval(checkOrderOnce, 2500);
+      // 页面重新可见时立刻查一次（从支付宝切回来）
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') checkOrderOnce();
+      });
+      window.addEventListener('focus', checkOrderOnce);
+    }
 
     if (!qr || !payKhr) {
       document.getElementById('error').style.display = 'block';
@@ -264,7 +404,6 @@
         document.getElementById('tradeLine').textContent = '订单号：' + trade;
       }
 
-      // QR
       const el = document.getElementById('qrcode');
       if (window.QRCode) {
         QRCode.toCanvas(document.createElement('canvas'), qr, {
@@ -280,7 +419,6 @@
           el.appendChild(canvas);
         });
       } else {
-        // fallback: google chart api
         const img = document.createElement('img');
         img.width = 240; img.height = 240;
         img.alt = 'QR';
@@ -304,6 +442,8 @@
           document.getElementById('copied').style.display = 'none';
         }, 2500);
       });
+
+      startPolling();
     }
   </script>
 </body>
