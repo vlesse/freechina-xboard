@@ -61,17 +61,26 @@ Telegram：**[https://t.me/lngsuan](https://t.me/lngsuan)**
 
 ## ABA 个人 KHQR 说明页
 
-文件：`public/aba-khqr-pay.html`  
+文件：
 
-展示：
+| 文件 | 说明 |
+|------|------|
+| `public/aba-khqr-pay.html` | 付款说明页（金额、复制、轮询订单、支付成功跳回） |
+| `public/qrcode.min.js` | **本地** 二维码库（避免 jsDelivr 等海外 CDN 被墙导致二维码空白） |
+
+页面展示：
 
 - 应付瑞尔（大号）  
 - 汇率与计算公式  
-- 二维码  
+- 二维码（优先本地库，失败再尝试镜像 API）  
 - 一键复制金额  
+- 支付成功后尝试自动跳回订单页  
 
-插件配置 `tip_page_url` 指向：
+插件配置 **金额说明页 URL / tip_page_url** 指向：
 
 ```text
 https://你的域名/aba-khqr-pay.html
 ```
+
+安装脚本（`install-overlay.sh` / `install-plugins-only.sh`）会同时复制上述两个文件。  
+若说明页空白：检查这两个文件是否都在 `public/` 下，并强制刷新浏览器。

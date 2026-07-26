@@ -1,77 +1,109 @@
 # FreeChina Xboard
 
-基于 [Xboard](https://github.com/cedar2025/Xboard) 的二次定制发行版，提供：
+基于 [Xboard](https://github.com/cedar2025/Xboard) 的二次定制，提供：
 
 - **Web3 风格官网主站** + 现代化登录 / 注册页  
-- **Jeepay 支付插件**：ABA 个人 KHQR、ABA PayWay 官方、PayPal、**Midtrans**  
-- **TokenPay 支付插件**：USDT-TRC20 / TRX 等链上支付  
-- 与 [Jeepay](https://github.com/jeequan/jeepay) / TokenPay 等收款系统配合使用  
+- **Jeepay 支付插件**：ABA 个人 KHQR、ABA PayWay、PayPal、**Midtrans**  
+- **TokenPay 支付插件**：USDT-TRC20 / TRX 等  
+- 对接已部署的 FreeChina Jeepay，也可填自己的网关  
 
 联系 / 技术交流：**Telegram → [https://t.me/lngsuan](https://t.me/lngsuan)**
 
 ---
 
-## 目录
+## 先读懂：本仓库不是「成品面板」
+
+```text
+官方 Xboard 程序
+    +  本仓库 overlay（前端 + 支付插件）
+    =  FreeChina Xboard 站点
+```
+
+| 你的情况 | 该做什么 | 详细文档 |
+|----------|----------|----------|
+| **服务器上还没有 Xboard** | 运行 `scripts/install.sh`：脚本会 **自动下载官方 Xboard**，再打上 FreeChina 补丁 | [docs/DEPLOY.md 路径 A](docs/DEPLOY.md) |
+| **已有 Xboard，要整套 FreeChina 前端 + 支付** | 运行 `scripts/install-overlay.sh`（**不要**再整站 `install.sh`） | [docs/DEPLOY.md 路径 B-1](docs/DEPLOY.md) |
+| **已有 Xboard，只要支付、不换首页** | 运行 `scripts/install-plugins-only.sh` | [docs/PLUGINS-ONLY.md](docs/PLUGINS-ONLY.md) |
+
+### 一键脚本会不会「在原有 Xboard 上改」？
+
+- **`install.sh`（完整一键）**：给 **从零** 用的。目录里没有 Xboard 时会 `git clone` 官方仓库，**不是**要求你先手动装好再改。  
+- **已有在跑的站点**：请用 `install-overlay.sh` 或 `install-plugins-only.sh`，并指定你的 Xboard 根目录。
+
+> 脚本只处理 **程序文件**。域名、SSL、MySQL、Redis、`.env`、官方初始化命令，需要你按文档手动完成。
+
+---
+
+## 文档目录
 
 | 文档 | 说明 |
 |------|------|
-| [docs/DEPLOY.md](docs/DEPLOY.md) | **完整部署**（推荐）：一键脚本 + 手动步骤、环境要求、配套系统 |
-| [docs/PLUGINS-ONLY.md](docs/PLUGINS-ONLY.md) | **只装支付插件**：不用本仓库前端，只把 5 个支付通道接到你现有的 Xboard |
-| [docs/PAYMENT-CHANNELS.md](docs/PAYMENT-CHANNELS.md) | 各支付通道说明、汇率配置、回调注意点 |
-| [docs/BRANDING.md](docs/BRANDING.md) | **品牌 / 标志修改**：拉源码后 FreeChina、FC Logo 在哪里改 |
+| **[docs/DEPLOY.md](docs/DEPLOY.md)** | **小白一步一步部署**（路径怎么选、每个命令干什么） |
+| [docs/PLUGINS-ONLY.md](docs/PLUGINS-ONLY.md) | 只装 5 个支付插件 |
+| [docs/PAYMENT-CHANNELS.md](docs/PAYMENT-CHANNELS.md) | 各支付通道、汇率、回调 |
+| [docs/BRANDING.md](docs/BRANDING.md) | 改 FreeChina 名称 / Logo |
+
+---
+
+## 快速开始
+
+### 情况 1：从零安装（路径 A）
+
+```bash
+# 1. 下载本仓库（定制脚本 + overlay，还不是最终网站目录）
+git clone https://github.com/vlesse/freechina-xboard.git
+cd freechina-xboard
+
+# 2. 完整一键：自动克隆官方 Xboard + 叠加 FreeChina
+export XBOARD_DIR=/www/wwwroot/xboard
+sudo bash scripts/install.sh
+
+# 3. 之后还必须手动：Nginx 指向 $XBOARD_DIR/public、SSL、.env、php artisan 初始化
+#    详见 docs/DEPLOY.md「路径 A」
+```
+
+网站运行目录应是：`/www/wwwroot/xboard/public`（示例），**不是** `freechina-xboard` 本身。
+
+### 情况 2：已有 Xboard，只要支付（路径 B-2）
+
+```bash
+git clone https://github.com/vlesse/freechina-xboard.git
+cd freechina-xboard
+bash scripts/install-plugins-only.sh /www/wwwroot/你的xboard目录
+```
+
+### 情况 3：已有 Xboard，要整套前端 + 支付（路径 B-1）
+
+```bash
+git clone https://github.com/vlesse/freechina-xboard.git
+cd freechina-xboard
+export XBOARD_DIR=/www/wwwroot/你的xboard目录
+bash scripts/install-overlay.sh
+```
 
 ---
 
 ## 功能一览
 
-### 前端
+### 前端（install.sh / install-overlay 后）
 
 | 路径 | 说明 |
 |------|------|
 | `/` | FreeChina Web3 风格官网主站 |
-| `/login` | 现代化登录页（对接 Xboard Passport API） |
-| `/register` | 现代化注册页 |
-| `/dashboard` 等 | 原 Xboard 用户中心 SPA |
+| `/login` | 定制登录页 |
+| `/register` | 定制注册页 |
+| `/dashboard` 等 | 原 Xboard 用户中心 |
+| `/aba-khqr-pay.html` | ABA KHQR 付款说明页（本地二维码库，不依赖海外 CDN） |
 
 ### 支付插件（`overlay/plugins-core/`）
 
-| 插件目录 | 支付方式标识 | 对接后端 | 说明 |
-|----------|--------------|----------|------|
-| `JeepayAbaQr` | `JeepayAbaQr` | Jeepay `ABA_KHQR` | 个人 KHQR 扫码，CNY→KHR 自动换算，说明页手输瑞尔 |
-| `JeepayAbaPc` | `JeepayAbaPc` | Jeepay `ABA_PC` | ABA PayWay 官方收银台 / API |
-| `JeepayPaypal` | `JeepayPaypal` | Jeepay `PP_PC` | PayPal |
-| `JeepayMidtrans` | `JeepayMidtrans` | Jeepay `MID_PC` | Midtrans 印尼收银台，CNY→IDR |
-| `TokenPay` | `TokenPay` | TokenPay 自建 | USDT/TRX 等 |
-
----
-
-## 快速开始（完整部署）
-
-> 推荐：已有一台 Linux VPS（Ubuntu 22.04 / Debian 11+），2 核 4G 起。
-
-```bash
-# 1. 克隆本仓库
-git clone https://github.com/vlesse/freechina-xboard.git
-cd freechina-xboard
-
-# 2. 一键安装（会克隆官方 Xboard 并打上本仓库 overlay）
-sudo bash scripts/install.sh
-```
-
-仓库地址：https://github.com/vlesse/freechina-xboard  
-
-详细环境、域名、HTTPS、支付配置见 **[docs/DEPLOY.md](docs/DEPLOY.md)**。
-
----
-
-## 只要支付插件
-
-```bash
-# 在你已有的 Xboard 根目录执行
-bash /path/to/freechina-xboard/scripts/install-plugins-only.sh /www/wwwroot/your-xboard
-```
-
-说明见 **[docs/PLUGINS-ONLY.md](docs/PLUGINS-ONLY.md)**。
+| 插件目录 | 标识 | Jeepay wayCode | 说明 |
+|----------|------|----------------|------|
+| `JeepayAbaQr` | JeepayAbaQr | `ABA_KHQR` | 个人 KHQR，CNY→KHR，说明页 |
+| `JeepayAbaPc` | JeepayAbaPc | `ABA_PC` | ABA PayWay 官方 |
+| `JeepayPaypal` | JeepayPaypal | `PP_PC` | PayPal |
+| `JeepayMidtrans` | JeepayMidtrans | `MID_PC` | Midtrans，CNY→IDR |
+| `TokenPay` | TokenPay | — | USDT/TRX 等 |
 
 ---
 
@@ -79,92 +111,66 @@ bash /path/to/freechina-xboard/scripts/install-plugins-only.sh /www/wwwroot/your
 
 ```text
 freechina-xboard/
-├── README.md                 # 本文件
-├── LICENSE
-├── docs/                     # 部署与插件文档
-├── overlay/                  # 覆盖到官方 Xboard 上的定制文件
-│   ├── plugins-core/         # 支付插件
+├── README.md
+├── docs/                      # 部署与支付文档（小白向）
+├── overlay/                   # 覆盖到官方 Xboard 上的文件
+│   ├── plugins-core/          # 支付插件
 │   ├── public/
-│   │   ├── landing/          # 主站 / 登录 / 注册
-│   │   └── aba-khqr-pay.html # KHQR 金额说明页
-│   └── routes-web.php        # 路由（替换 routes/web.php）
+│   │   ├── landing/           # 主站 / 登录 / 注册
+│   │   ├── aba-khqr-pay.html  # KHQR 说明页
+│   │   └── qrcode.min.js      # 本地二维码库
+│   └── routes-web.php         # 替换 routes/web.php
 ├── scripts/
-│   ├── install.sh            # 完整安装
-│   └── install-plugins-only.sh
-└── docker/                   # 可选 Docker 参考
+│   ├── install.sh             # 从零：clone 官方 + overlay
+│   ├── install-overlay.sh     # 已有站：整套 FreeChina
+│   └── install-plugins-only.sh# 已有站：只装支付
+└── docker/                    # 可选 Docker 参考
 ```
 
 ---
 
-## 如何修改 FreeChina 标志 / 品牌名
+## 对接 FreeChina Jeepay（默认）
 
-克隆本仓库后，**默认品牌为 FreeChina（角标 FC）**。若要换成自己的名称与 Logo：
+不必自己再搭 Jeepay：
 
-| 要改的内容 | 文件位置（安装后） |
-|------------|-------------------|
-| 官网顶栏 Logo 字 +「FC」 | `public/landing/index.html` 中 `.brand-logo` / 品牌文字 |
-| 登录页 Logo | `public/landing/login.html` 中 `.brand-mark` |
-| 注册页 Logo | `public/landing/register.html` 中 `.brand-mark` |
-| 浏览器标题、页脚版权 | 上述 HTML 的 `<title>`、页脚文案 |
-| 用户中心站点名 / Logo | **Xboard 管理后台 → 站点设置**（与落地页分开） |
+| 用途 | 地址 |
+|------|------|
+| 商户后台（拿 mchNo / appId / appSecret） | https://payment.free--china.com/ |
+| 插件里「Jeepay支付网关」 | `https://pay.free--china.com`（**无尾斜杠**） |
 
-**完整说明（含换图片 Logo、改主题色、全文搜索关键词）：**  
+也可改成你自己的 Jeepay 域名。细节见 [docs/DEPLOY.md](docs/DEPLOY.md) 与 [docs/PAYMENT-CHANNELS.md](docs/PAYMENT-CHANNELS.md)。
+
+---
+
+## 如何修改品牌 / Logo
+
+默认品牌为 **FreeChina（角标 FC）**。改名、换图、主题色：
+
 👉 **[docs/BRANDING.md](docs/BRANDING.md)**
 
-快速搜索：
-
-```bash
-grep -R "FreeChina\|brand-logo\|brand-mark" public/landing
-```
-
----
-
-## 配套系统（完整收款能力）
-
-本发行版 **Xboard 面板** 可单独部署；支付走已部署好的 **FreeChina Jeepay**，不必自己再搭一套 Jeepay。
-
-### FreeChina Jeepay（已就绪，直接对接）
-
-| 用途 | 地址 | 说明 |
-|------|------|------|
-| **Jeepay 商户后台** | **https://payment.free--china.com/** | 登录后查看/配置商户、应用、通道（ABA / PayPal 等） |
-| **Jeepay 支付网关 API** | **https://pay.free--china.com** | Xboard 支付插件里的「Jeepay支付网关」填此地址（**无尾斜杠**） |
-
-在 Xboard「支付配置」中填写：
-
-- **Jeepay支付网关**：`https://pay.free--china.com`  
-- **mchNo / appId / appSecret**：到 [payment.free--china.com](https://payment.free--china.com/) 商户应用里复制  
-
-| 系统 | 用途 | 说明 |
-|------|------|------|
-| **Jeepay（FreeChina）** | ABA KHQR / ABA PayWay / PayPal | 使用上方已部署地址，**默认对接 payment.free--china.com** |
-| **ABA 个人桥 / aba-bridge** | 个人 KHQR 到账监听 | 配合 `JeepayAbaQr`（与 FreeChina Jeepay 同环境） |
-| **TokenPay** | USDT/TRX | 需自备 TokenPay 实例，在支付配置填 API 与密钥 |
-
-> 若你要使用**自己的** Jeepay，也可把网关改成你的域名；默认文档与插件示例均指向 FreeChina 现成服务。
+用户中心站点名在 **Xboard 管理后台 → 站点设置**（与落地页 HTML 分开）。
 
 ---
 
 ## 安全提示
 
-- 仓库内 **不含** 任何生产密钥、数据库密码、商户密钥。  
-- 请使用 `.env` / 后台配置填写密钥，勿提交到 Git。  
-- 生产环境务必 HTTPS + 定期备份数据库。
+- 仓库 **不含** 生产密钥、数据库密码、商户密钥。  
+- 密钥只放在 `.env` / 后台配置，勿提交 Git。  
+- 生产环境务必 HTTPS，并定期备份数据库。
 
 ---
 
 ## 许可
 
-- 本仓库 **定制部分**（overlay / 脚本 / 文档）：[MIT License](LICENSE)  
-- 上游 **Xboard** 请遵循其自身开源协议（见 [cedar2025/Xboard](https://github.com/cedar2025/Xboard)）  
-- Jeepay / TokenPay 等第三方项目遵循各自许可证  
+- 本仓库定制部分（overlay / 脚本 / 文档）：[MIT License](LICENSE)  
+- 上游 [Xboard](https://github.com/cedar2025/Xboard)、Jeepay、TokenPay 遵循各自许可证  
 
 ---
 
 ## 支持
 
 - Telegram：**[@lngsuan](https://t.me/lngsuan)**  
-- 部署问题、二次开发、支付联调可私聊联系  
+- 部署问题请说明：选的是路径 A / B-1 / B-2、完整命令、报错全文  
 
 ---
 

@@ -1,70 +1,92 @@
-# 仅安装支付插件（不使用 FreeChina 前端）
-
-适用于：你已经有自己的 **Xboard / 类 Xboard** 站点，只想接入本仓库的支付能力。
+# 只安装支付插件（小白版）
 
 联系：**Telegram [https://t.me/lngsuan](https://t.me/lngsuan)**
 
 ---
 
-## 包含插件
+## 这份文档适合谁？
 
-| 目录 | 支付接口名（后台可选） | 依赖 |
-|------|------------------------|------|
-| `JeepayAbaQr` | JeepayAbaQr | Jeepay + ABA 个人 KHQR 中转 |
-| `JeepayAbaPc` | JeepayAbaPc | Jeepay + ABA PayWay 官方 |
-| `JeepayPaypal` | JeepayPaypal | Jeepay + PayPal |
-| `JeepayMidtrans` | JeepayMidtrans | Jeepay + Midtrans（MID_PC / IDR） |
-| `TokenPay` | TokenPay | 自建 TokenPay |
+| 适合 | 不适合 |
+|------|--------|
+| 你 **已经有一个能打开的 Xboard** | 服务器上还没有 Xboard（请看 [DEPLOY.md](DEPLOY.md) **路径 A**） |
+| 你只想加支付（ABA / PayPal / Midtrans / TokenPay） | 你想换成 FreeChina 首页 + 登录页（请看 DEPLOY **路径 B-1** `install-overlay.sh`） |
+| 你想 **保留自己现在的前端** | — |
 
-可选：`public/aba-khqr-pay.html`（仅 KHQR 手输金额说明页需要）。
+**一句话：** 这里 **不会** 安装整站 Xboard，也 **不会** 换你的首页；只是把支付相关文件拷进你现有的 Xboard 目录。
 
 ---
 
-## 环境要求
+## 开始前请确认
 
-- 已运行的 **Xboard**（插件系统为 `plugins-core` + `PaymentInterface` 模型，与 cedar2025/Xboard 一致）  
-- PHP 8.1+  
-- 能访问外网（请求 Jeepay / TokenPay）  
+1. 能用浏览器打开你的 Xboard 用户端  
+2. 知道服务器上的 **Xboard 根目录**（里面有 `artisan` 文件）  
+   - 宝塔常见：`/www/wwwroot/你的域名`  
+3. 有 SSH 权限，能执行命令  
 
 ---
 
-## 一键安装插件
+## 第一步：下载本仓库
+
+在服务器上任意目录执行（示例放到 `/root`）：
 
 ```bash
-# 本仓库目录
+cd /root
+git clone https://github.com/vlesse/freechina-xboard.git
 cd freechina-xboard
-
-# 参数：你的 Xboard 根目录（含 plugins-core、artisan 的目录）
-bash scripts/install-plugins-only.sh /www/wwwroot/your-xboard
 ```
-
-脚本会：
-
-1. 复制 5 个支付插件到 `plugins-core/`（含 JeepayMidtrans）  
-2. 可选复制 `aba-khqr-pay.html` 到 `public/`  
-3. 执行 `php artisan optimize:clear`（插件启用请在后台或按下方 SQL 写入 `v2_plugins`）  
 
 ---
 
-## 手动安装
+## 第二步：运行「仅插件」安装脚本
+
+把下面路径改成 **你自己的 Xboard 根目录**：
 
 ```bash
-XBOARD=/www/wwwroot/your-xboard
-
-cp -a overlay/plugins-core/JeepayAbaQr     $XBOARD/plugins-core/
-cp -a overlay/plugins-core/JeepayAbaPc     $XBOARD/plugins-core/
-cp -a overlay/plugins-core/JeepayPaypal    $XBOARD/plugins-core/
-cp -a overlay/plugins-core/JeepayMidtrans  $XBOARD/plugins-core/
-cp -a overlay/plugins-core/TokenPay        $XBOARD/plugins-core/
-
-# 可选：KHQR 说明页
-cp -a overlay/public/aba-khqr-pay.html   $XBOARD/public/
-
-chown -R www:www $XBOARD/plugins-core $XBOARD/public/aba-khqr-pay.html
-cd $XBOARD && php artisan optimize:clear
+# 示例：你的 Xboard 在 /www/wwwroot/panel.example.com
+bash scripts/install-plugins-only.sh /www/wwwroot/panel.example.com
 ```
 
-### 数据库启用插件（若后台看不到）
+### 脚本会做什么？
+
+1. 把 5 个支付插件复制到：`你的Xboard/plugins-core/`  
+2. 复制付款说明页：`public/aba-khqr-pay.html`  
+3. 复制本地二维码库：`public/qrcode.min.js`（避免国外 CDN 导致二维码不显示）  
+4. 尝试清理 Laravel 缓存  
+
+### 脚本 **不会** 做什么？
+
+- 不会安装 PHP / MySQL  
+- 不会改你的首页、登录页  
+- 不会自动在后台「点启用」——你还要在后台配置支付  
+
+---
+
+## 第三步：清理缓存（建议再执行一次）
+
+```bash
+cd /www/wwwroot/panel.example.com   # 改成你的目录
+php artisan optimize:clear
+```
+
+---
+
+## 第四步：后台启用插件
+
+1. 登录 **Xboard 管理后台**  
+2. 打开 **插件**  
+3. 启用：
+
+| code | 用途 |
+|------|------|
+| `jeepay_aba_qr` | ABA 个人 KHQR |
+| `jeepay_aba_pc` | ABA PayWay |
+| `jeepay_paypal` | PayPal |
+| `jeepay_midtrans` | Midtrans |
+| `token_pay` | TokenPay（可选） |
+
+### 若后台完全没有这些插件
+
+在 MySQL 里执行（`code` 已存在会报错，可忽略或改 UPDATE）：
 
 ```sql
 INSERT INTO v2_plugins (name, code, type, version, is_enabled, config, installed_at, created_at, updated_at)
@@ -76,101 +98,110 @@ VALUES
 ('TokenPay', 'token_pay', 'payment', '1.0.0', 1, '[]', NOW(), NOW(), NOW());
 ```
 
-若 `code` 已存在则改为 `UPDATE ... SET is_enabled=1`。
+然后刷新后台插件页。
 
 ---
 
-## 后台配置支付方式
+## 第五步：添加支付方式（对接 Jeepay）
+
+### 5.1 准备密钥（FreeChina 现成 Jeepay）
+
+1. 打开 https://payment.free--china.com/ 登录  
+2. 找到 **商户应用**  
+3. 复制：`mchNo`、`appId`、`appSecret`  
+
+支付网关统一填：
+
+```text
+https://pay.free--china.com
+```
+
+（不要末尾斜杠 `/`）
+
+### 5.2 在 Xboard 里添加
 
 **系统设置 → 支付配置 → 添加**
 
-> **默认对接 FreeChina 已部署的 Jeepay**  
-> - 商户后台：https://payment.free--china.com/  
-> - 支付网关：`https://pay.free--china.com`  
-> 密钥在 payment 后台「商户应用」中复制。
+#### 示例 1：ABA 个人 KHQR
 
-### 1）JeepayAbaQr（个人 KHQR）
-
-| 配置项 | 示例 |
-|--------|------|
-| 支付接口 | JeepayAbaQr |
+| 配置项 | 填写示例 |
+|--------|----------|
+| 显示名称 | 支付宝扫码 |
+| 支付接口 | **JeepayAbaQr** |
 | Jeepay支付网关 | `https://pay.free--china.com` |
-| mchNo / appId / appSecret | 从 https://payment.free--china.com/ 商户应用复制 |
+| mchNo / appId / appSecret | 从 payment 后台复制 |
 | wayCode | `ABA_KHQR` |
-| 人民币→瑞尔汇率 | `560` |
-| 金额说明页URL | `https://你的Xboard域名/aba-khqr-pay.html` |
+| 人民币→瑞尔汇率 | `560`（按你实际改） |
+| 金额说明页 URL | `https://你的域名/aba-khqr-pay.html` |
 
-### 2）JeepayAbaPc（ABA PayWay 官方）
+#### 示例 2～4
 
-| 配置项 | 示例 |
-|--------|------|
-| 支付接口 | JeepayAbaPc |
-| Jeepay支付网关 | `https://pay.free--china.com` |
-| mchNo / appId / appSecret | 从 https://payment.free--china.com/ 复制 |
-| wayCode | `ABA_PC` |
-| 结算货币 | `USD` 或 `KHR` |
-| 汇率 | USD 例 `0.14`；KHR 例 `560` |
+| 接口 | wayCode | 其它 |
+|------|---------|------|
+| JeepayAbaPc | `ABA_PC` | 结算币 USD/KHR + 汇率 |
+| JeepayPaypal | `PP_PC` | `cny_to_usd_rate` 如 0.14 |
+| JeepayMidtrans | `MID_PC` | `cny_to_idr_rate` 默认 2200 |
 
-### 3）JeepayPaypal
-
-| 配置项 | 示例 |
-|--------|------|
-| 支付接口 | JeepayPaypal |
-| Jeepay支付网关 | `https://pay.free--china.com` |
-| mchNo / appId / appSecret | 从 https://payment.free--china.com/ 复制 |
-| wayCode | `PP_PC` |
-| 结算货币 | `USD` |
-| 人民币→美元汇率 | `0.14` |
-
-### 4）JeepayMidtrans（Midtrans）
-
-| 配置项 | 示例 |
-|--------|------|
-| 支付接口 | JeepayMidtrans |
-| Jeepay支付网关 | `https://pay.free--china.com` |
-| mchNo / appId / appSecret | 从 https://payment.free--china.com/ 复制 |
-| wayCode | `MID_PC` |
-| 结算货币 | `IDR` |
-| 人民币→印尼盾汇率 | `2200`（1 CNY = 2200 IDR，可按牌价改） |
-
-### 5）TokenPay
-
-| 配置项 | 示例 |
-|--------|------|
-| 支付接口 | TokenPay |
-| API 地址 | `https://tokenpay.example.com`（无尾斜杠） |
-| API Token | TokenPay 异步通知密钥 |
-| 币种 | `USDT_TRC20` 或 `TRX` |
+保存后，到用户端 **下单 → 结账** 测试。
 
 ---
 
-## 不需要改路由
+## 手动安装（不想用脚本时）
 
-只装插件时 **不必** 替换 `routes/web.php`，也 **不必** 使用 FreeChina 主站 / 登录页。  
-用户仍使用你原来的 Xboard 前端下单即可。
+```bash
+XBOARD=/www/wwwroot/你的xboard目录
+
+cp -a overlay/plugins-core/JeepayAbaQr     $XBOARD/plugins-core/
+cp -a overlay/plugins-core/JeepayAbaPc     $XBOARD/plugins-core/
+cp -a overlay/plugins-core/JeepayPaypal    $XBOARD/plugins-core/
+cp -a overlay/plugins-core/JeepayMidtrans  $XBOARD/plugins-core/
+cp -a overlay/plugins-core/TokenPay        $XBOARD/plugins-core/
+
+cp -a overlay/public/aba-khqr-pay.html     $XBOARD/public/
+cp -a overlay/public/qrcode.min.js         $XBOARD/public/
+
+chown -R www:www $XBOARD/plugins-core \
+  $XBOARD/public/aba-khqr-pay.html \
+  $XBOARD/public/qrcode.min.js
+
+cd $XBOARD && php artisan optimize:clear
+```
 
 ---
 
-## 回调地址
+## 回调地址说明
 
 Xboard 会自动生成类似：
 
 ```text
-https://你的域名/api/v1/guest/payment/notify/{PaymentMethod}/{uuid}
+https://你的域名/api/v1/guest/payment/notify/{支付方式名}/{uuid}
 ```
 
-- Jeepay：下单时作为 `notifyUrl` 传入，无需在 Jeepay 写死  
-- TokenPay：下单时作为 `NotifyUrl` 传入；成功响应体为 **`ok`**  
+- Jeepay：下单时作为 `notifyUrl` 传入，一般 **不用** 在 Jeepay 里写死  
+- TokenPay：成功时接口需返回纯文本 `ok`（本插件已处理）  
 
 ---
 
-## 兼容性说明
+## 兼容性
 
-- 针对 **cedar2025/Xboard** 插件架构（`plugins-core` + `App\Contracts\PaymentInterface`）  
-- 若你的面板是旧版 V2board 的 `app/Payments/*.php` 结构，不能直接复制，需要自行移植或联系改造  
+- 针对 **cedar2025/Xboard** 的 `plugins-core` + `PaymentInterface`  
+- 老式 V2board 的 `app/Payments/*.php` **不能** 直接复制，需另做移植  
+
+---
+
+## 常见问题
+
+**Q：脚本提示不是 Xboard 目录？**  
+A：路径要指到含 `artisan` 的那一层，不要指到 `public` 里面。
+
+**Q：结账后说明页没有二维码？**  
+A：确认 `public/qrcode.min.js` 已复制；浏览器强制刷新；说明页 URL 配置正确。
+
+**Q：后台没有支付接口可选？**  
+A：插件未启用；先做第四步。
 
 ---
 
 ## 支持
 
-Telegram：**[https://t.me/lngsuan](https://t.me/lngsuan)**
+Telegram：**[https://t.me/lngsuan](https://t.me/lngsuan)**  

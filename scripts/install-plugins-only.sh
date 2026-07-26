@@ -26,6 +26,10 @@ cp -a "${ROOT_DIR}/overlay/plugins-core/TokenPay" "${XBOARD_DIR}/plugins-core/"
 if [[ -d "${XBOARD_DIR}/public" ]]; then
   cp -a "${ROOT_DIR}/overlay/public/aba-khqr-pay.html" "${XBOARD_DIR}/public/aba-khqr-pay.html"
   echo "==> 已复制 aba-khqr-pay.html"
+  if [[ -f "${ROOT_DIR}/overlay/public/qrcode.min.js" ]]; then
+    cp -a "${ROOT_DIR}/overlay/public/qrcode.min.js" "${XBOARD_DIR}/public/qrcode.min.js"
+    echo "==> 已复制 qrcode.min.js（本地二维码库）"
+  fi
 fi
 
 if id www &>/dev/null; then
@@ -33,13 +37,17 @@ if id www &>/dev/null; then
     "${XBOARD_DIR}/plugins-core/JeepayAbaPc" \
     "${XBOARD_DIR}/plugins-core/JeepayPaypal" \
     "${XBOARD_DIR}/plugins-core/JeepayMidtrans" \
-    "${XBOARD_DIR}/plugins-core/TokenPay" 2>/dev/null || true
+    "${XBOARD_DIR}/plugins-core/TokenPay" \
+    "${XBOARD_DIR}/public/aba-khqr-pay.html" \
+    "${XBOARD_DIR}/public/qrcode.min.js" 2>/dev/null || true
 elif id www-data &>/dev/null; then
   chown -R www-data:www-data "${XBOARD_DIR}/plugins-core/JeepayAbaQr" \
     "${XBOARD_DIR}/plugins-core/JeepayAbaPc" \
     "${XBOARD_DIR}/plugins-core/JeepayPaypal" \
     "${XBOARD_DIR}/plugins-core/JeepayMidtrans" \
-    "${XBOARD_DIR}/plugins-core/TokenPay" 2>/dev/null || true
+    "${XBOARD_DIR}/plugins-core/TokenPay" \
+    "${XBOARD_DIR}/public/aba-khqr-pay.html" \
+    "${XBOARD_DIR}/public/qrcode.min.js" 2>/dev/null || true
 fi
 
 if [[ -f "${XBOARD_DIR}/artisan" ]] && command -v php &>/dev/null; then
