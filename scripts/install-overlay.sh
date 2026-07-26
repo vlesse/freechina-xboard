@@ -25,9 +25,13 @@ mkdir -p "${XBOARD_DIR}/public/landing"
 echo "==> 复制支付插件"
 cp -a "${ROOT_DIR}/overlay/plugins-core/." "${XBOARD_DIR}/plugins-core/"
 
-echo "==> 复制落地页与 KHQR 说明页"
+echo "==> 复制落地页、KHQR 说明页与本地二维码库"
 cp -a "${ROOT_DIR}/overlay/public/landing/." "${XBOARD_DIR}/public/landing/"
 cp -a "${ROOT_DIR}/overlay/public/aba-khqr-pay.html" "${XBOARD_DIR}/public/aba-khqr-pay.html"
+if [[ -f "${ROOT_DIR}/overlay/public/qrcode.min.js" ]]; then
+  cp -a "${ROOT_DIR}/overlay/public/qrcode.min.js" "${XBOARD_DIR}/public/qrcode.min.js"
+  echo "==> 已复制 public/qrcode.min.js（避免海外 CDN 导致二维码空白）"
+fi
 
 echo "==> 备份并替换 routes/web.php"
 if [[ -f "${XBOARD_DIR}/routes/web.php" ]]; then
@@ -44,6 +48,7 @@ if id www &>/dev/null; then
     "${XBOARD_DIR}/plugins-core/TokenPay" \
     "${XBOARD_DIR}/public/landing" \
     "${XBOARD_DIR}/public/aba-khqr-pay.html" \
+    "${XBOARD_DIR}/public/qrcode.min.js" \
     "${XBOARD_DIR}/routes/web.php" 2>/dev/null || true
 elif id www-data &>/dev/null; then
   chown -R www-data:www-data \
@@ -54,6 +59,7 @@ elif id www-data &>/dev/null; then
     "${XBOARD_DIR}/plugins-core/TokenPay" \
     "${XBOARD_DIR}/public/landing" \
     "${XBOARD_DIR}/public/aba-khqr-pay.html" \
+    "${XBOARD_DIR}/public/qrcode.min.js" \
     "${XBOARD_DIR}/routes/web.php" 2>/dev/null || true
 fi
 
