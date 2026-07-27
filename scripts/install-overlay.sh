@@ -28,6 +28,10 @@ cp -a "${ROOT_DIR}/overlay/plugins-core/." "${XBOARD_DIR}/plugins-core/"
 echo "==> 复制落地页、KHQR 说明页与本地二维码库"
 cp -a "${ROOT_DIR}/overlay/public/landing/." "${XBOARD_DIR}/public/landing/"
 cp -a "${ROOT_DIR}/overlay/public/aba-khqr-pay.html" "${XBOARD_DIR}/public/aba-khqr-pay.html"
+if [[ -f "${ROOT_DIR}/overlay/public/aba-khqr-pay.php" ]]; then
+  cp -a "${ROOT_DIR}/overlay/public/aba-khqr-pay.php" "${XBOARD_DIR}/public/aba-khqr-pay.php"
+  echo "==> 已复制 public/aba-khqr-pay.php（服务端渲染说明页）"
+fi
 if [[ -f "${ROOT_DIR}/overlay/public/qrcode.min.js" ]]; then
   cp -a "${ROOT_DIR}/overlay/public/qrcode.min.js" "${XBOARD_DIR}/public/qrcode.min.js"
   echo "==> 已复制 public/qrcode.min.js（避免海外 CDN 导致二维码空白）"

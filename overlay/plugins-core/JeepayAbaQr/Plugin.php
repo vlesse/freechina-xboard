@@ -74,8 +74,8 @@ class Plugin extends AbstractPlugin implements PaymentInterface
                 'label' => '金额说明页URL',
                 'type' => 'string',
                 'required' => true,
-                'default' => 'https://free--china.com/aba-khqr-pay.html',
-                'description' => '展示「请输入多少瑞尔」的页面完整地址（public/aba-khqr-pay.html）',
+                'default' => 'https://free--china.com/aba-khqr-pay.php',
+                'description' => '展示「请输入多少瑞尔」的页面完整地址（推荐 aba-khqr-pay.php，服务端渲染二维码）',
             ],
             'product_name' => [
                 'label' => '商品标题前缀',
@@ -107,10 +107,15 @@ class Plugin extends AbstractPlugin implements PaymentInterface
         $appSecret = (string) $this->getConfig('app_secret');
         $wayCode = (string) $this->getConfig('way_code', 'ABA_KHQR');
         $prefix = (string) $this->getConfig('product_name', 'XBoard');
-        $tipPage = rtrim((string) $this->getConfig('tip_page_url', 'https://free--china.com/aba-khqr-pay.html'), '/');
-        // 允许填到 .html 或目录；统一规范
-        if (!preg_match('/\.html$/i', $tipPage)) {
-            $tipPage = $tipPage . '/aba-khqr-pay.html';
+        // 默认用 .php：服务端渲染金额+二维码，不依赖浏览器 JS
+        $tipPage = rtrim((string) $this->getConfig('tip_page_url', 'https://free--china.com/aba-khqr-pay.php'), '/');
+        // 允许填到 .php / .html 或目录
+        if (!preg_match('/\.(php|html)$/i', $tipPage)) {
+            $tipPage = $tipPage . '/aba-khqr-pay.php';
+        }
+        // 旧配置仍写 .html 时，自动改用 .php（.html 会 302 跳转，但直接 .php 更稳）
+        if (preg_match('/aba-khqr-pay\.html$/i', $tipPage)) {
+            $tipPage = preg_replace('/\.html$/i', '.php', $tipPage);
         }
 
         $params = [
