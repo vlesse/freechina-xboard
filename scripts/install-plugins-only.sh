@@ -26,6 +26,10 @@ cp -a "${ROOT_DIR}/overlay/plugins-core/TokenPay" "${XBOARD_DIR}/plugins-core/"
 if [[ -d "${XBOARD_DIR}/public" ]]; then
   cp -a "${ROOT_DIR}/overlay/public/aba-khqr-pay.html" "${XBOARD_DIR}/public/aba-khqr-pay.html"
   echo "==> 已复制 aba-khqr-pay.html"
+  if [[ -f "${ROOT_DIR}/overlay/public/aba-khqr-pay.php" ]]; then
+    cp -a "${ROOT_DIR}/overlay/public/aba-khqr-pay.php" "${XBOARD_DIR}/public/aba-khqr-pay.php"
+    echo "==> 已复制 aba-khqr-pay.php（服务端渲染）"
+  fi
   if [[ -f "${ROOT_DIR}/overlay/public/qrcode.min.js" ]]; then
     cp -a "${ROOT_DIR}/overlay/public/qrcode.min.js" "${XBOARD_DIR}/public/qrcode.min.js"
     echo "==> 已复制 qrcode.min.js（本地二维码库）"
