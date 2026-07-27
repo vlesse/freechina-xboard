@@ -119,10 +119,10 @@ class Plugin extends AbstractPlugin implements PaymentInterface
         $wayCode = (string) $this->getConfig('way_code', 'MID_PC');
         $prefix = (string) $this->getConfig('product_name', 'XBoard');
 
-        $params = [
+        $tradeNo = (string) $order['trade_no'];
+        $base = [
             'mchNo' => $mchNo,
             'appId' => $appId,
-            'mchOrderNo' => $order['trade_no'],
             'wayCode' => $wayCode,
             'amount' => $jeepayAmount,
             'currency' => $currency,
@@ -130,31 +130,11 @@ class Plugin extends AbstractPlugin implements PaymentInterface
             'body' => sprintf('CNY %s @ rate %s = %s %s', number_format($cny, 2, '.', ''), $rate, $idr, $currency),
             'notifyUrl' => $order['notify_url'],
             'returnUrl' => $order['return_url'],
-            'reqTime' => (string) (int) (microtime(true) * 1000),
             'version' => '1.0',
             'signType' => 'MD5',
         ];
-        $params['sign'] = $this->sign($params, $appSecret);
 
-        $raw = $this->httpPostJson($gateway . '/api/pay/unifiedOrder', $params);
-        $json = json_decode($raw, true);
-        if (!is_array($json)) {
-            Log::error('[JeepayMidtrans] bad response', ['raw' => $raw]);
-            throw new ApiException('Jeepay 返回非 JSON');
-        }
-
-        if (($json['code'] ?? -1) != 0) {
-            $msg = $json['msg'] ?? json_encode($json, JSON_UNESCAPED_UNICODE);
-            Log::error('[JeepayMidtrans] unifiedOrder fail', $json);
-            throw new ApiException('Jeepay 下单失败: ' . $msg);
-        }
-
-        $data = $json['data'] ?? [];
-        if (is_object($data)) {
-            $data = (array) $data;
-        }
-        $payData = $data['payData'] ?? '';
-
+        $payData = $this->unifiedOrReuse($gateway, $appSecret, $base, $tradeNo, '[JeepayMidtrans]');
         if ($payData === '' || $payData === null) {
             throw new ApiException('Jeepay 未返回 Midtrans 支付链接');
         }
@@ -185,11 +165,82 @@ class Plugin extends AbstractPlugin implements PaymentInterface
             return false;
         }
 
+        $mchOrderNo = (string) ($params['mchOrderNo'] ?? '');
+        $tradeNo = preg_match('/^(.*)R\d{8,}$/', $mchOrderNo, $m) ? $m[1] : $mchOrderNo;
+
         return [
-            'trade_no' => $params['mchOrderNo'] ?? '',
+            'trade_no' => $tradeNo,
             'callback_no' => $params['payOrderId'] ?? ($params['channelOrderNo'] ?? ''),
             'custom_result' => 'success',
         ];
+    }
+
+    private function unifiedOrReuse(string $gateway, string $appSecret, array $base, string $tradeNo, string $tag): string
+    {
+        $try = function (string $mchOrderNo) use ($gateway, $appSecret, $base, $tag) {
+            $params = $base;
+            $params['mchOrderNo'] = $mchOrderNo;
+            $params['reqTime'] = (string) (int) (microtime(true) * 1000);
+            $params['sign'] = $this->sign($params, $appSecret);
+            $raw = $this->httpPostJson($gateway . '/api/pay/unifiedOrder', $params);
+            $json = json_decode($raw, true);
+            if (!is_array($json)) {
+                throw new ApiException('Jeepay 返回非 JSON');
+            }
+            if (($json['code'] ?? -1) == 0) {
+                $data = $json['data'] ?? [];
+                if (is_object($data)) {
+                    $data = (array) $data;
+                }
+                return [true, (string) ($data['payData'] ?? ''), false];
+            }
+            $msg = (string) ($json['msg'] ?? '');
+            $exists = (mb_strpos($msg, '已存在') !== false) || (stripos($msg, 'already exist') !== false);
+            if ($exists) {
+                Log::info($tag . ' order exists', ['mchOrderNo' => $mchOrderNo, 'msg' => $msg]);
+                return [false, '', true];
+            }
+            Log::error($tag . ' unifiedOrder fail', $json);
+            throw new ApiException('Jeepay 下单失败: ' . $msg);
+        };
+
+        [$ok, $payData, $exists] = $try($tradeNo);
+        if ($ok && $payData !== '') {
+            return $payData;
+        }
+        if ($exists) {
+            $q = [
+                'mchNo' => $base['mchNo'],
+                'appId' => $base['appId'],
+                'mchOrderNo' => $tradeNo,
+                'reqTime' => (string) (int) (microtime(true) * 1000),
+                'version' => '1.0',
+                'signType' => 'MD5',
+            ];
+            $q['sign'] = $this->sign($q, $appSecret);
+            try {
+                $raw = $this->httpPostJson($gateway . '/api/pay/query', $q);
+                $json = json_decode($raw, true);
+                if (is_array($json) && ($json['code'] ?? -1) == 0) {
+                    $data = $json['data'] ?? [];
+                    if (is_object($data)) {
+                        $data = (array) $data;
+                    }
+                    $pd = (string) ($data['payData'] ?? '');
+                    if ($pd !== '') {
+                        return $pd;
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning($tag . ' query fail', ['err' => $e->getMessage()]);
+            }
+            $retryNo = $tradeNo . 'R' . substr((string) time(), -8) . random_int(10, 99);
+            [$ok2, $payData2] = $try($retryNo);
+            if ($ok2 && $payData2 !== '') {
+                return $payData2;
+            }
+        }
+        return '';
     }
 
     private function sign(array $params, string $key): string

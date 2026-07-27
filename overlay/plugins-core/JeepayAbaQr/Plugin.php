@@ -5,6 +5,7 @@ namespace Plugin\JeepayAbaQr;
 use App\Contracts\PaymentInterface;
 use App\Exceptions\ApiException;
 use App\Services\Plugin\AbstractPlugin;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -12,7 +13,10 @@ use Illuminate\Support\Facades\Log;
  *
  * Xboard 订单金额单位：人民币「分」（50 元 = 5000）
  * 下单到 Jeepay 前按汇率换算为 KHR。
- * 因个人固定商业码无法写死金额，支付后跳转说明页，醒目提示用户手输瑞尔金额。
+ * 个人固定商业码无法写死金额 → 跳转说明页提示用户手输瑞尔。
+ *
+ * 再次结账：同一 trade_no 在 Jeepay 已存在时，优先查单复用 / 缓存 tip URL，
+ * 否则使用 trade_no + R + 时间戳 作为新 mchOrderNo（回调时还原 trade_no）。
  */
 class Plugin extends AbstractPlugin implements PaymentInterface
 {
@@ -87,6 +91,16 @@ class Plugin extends AbstractPlugin implements PaymentInterface
 
     public function pay($order): array
     {
+        $tradeNo = (string) $order['trade_no'];
+        $cacheKey = 'jeepay_aba_qr_tip:' . $tradeNo;
+
+        // 同一订单再次点结账：直接返回上次说明页（避免「商户订单已存在」）
+        $cached = Cache::get($cacheKey);
+        if (is_string($cached) && $cached !== '') {
+            Log::info('[JeepayAbaQr] reuse cached tip', ['trade_no' => $tradeNo]);
+            return ['type' => 1, 'data' => $cached];
+        }
+
         $cnyFen = (int) $order['total_amount'];
         $cny = round($cnyFen / 100, 2);
         $rate = (float) $this->getConfig('cny_to_khr_rate', 560);
@@ -94,7 +108,6 @@ class Plugin extends AbstractPlugin implements PaymentInterface
             throw new ApiException('汇率配置无效');
         }
 
-        // 瑞尔一般按整数收取（ceil 避免少收）
         $khrMajor = (int) ceil($cny * $rate);
         if ($khrMajor < 1) {
             $khrMajor = 1;
@@ -107,21 +120,13 @@ class Plugin extends AbstractPlugin implements PaymentInterface
         $appSecret = (string) $this->getConfig('app_secret');
         $wayCode = (string) $this->getConfig('way_code', 'ABA_KHQR');
         $prefix = (string) $this->getConfig('product_name', 'XBoard');
-        // 默认用 .php：服务端渲染金额+二维码，不依赖浏览器 JS
-        $tipPage = rtrim((string) $this->getConfig('tip_page_url', 'https://free--china.com/aba-khqr-pay.php'), '/');
-        // 允许填到 .php / .html 或目录
-        if (!preg_match('/\.(php|html)$/i', $tipPage)) {
-            $tipPage = $tipPage . '/aba-khqr-pay.php';
-        }
-        // 旧配置仍写 .html 时，自动改用 .php（.html 会 302 跳转，但直接 .php 更稳）
-        if (preg_match('/aba-khqr-pay\.html$/i', $tipPage)) {
-            $tipPage = preg_replace('/\.html$/i', '.php', $tipPage);
-        }
+        $tipPage = $this->normalizeTipPage(
+            (string) $this->getConfig('tip_page_url', 'https://free--china.com/aba-khqr-pay.php')
+        );
 
-        $params = [
+        $baseParams = [
             'mchNo' => $mchNo,
             'appId' => $appId,
-            'mchOrderNo' => $order['trade_no'],
             'wayCode' => $wayCode,
             'amount' => $jeepayAmount,
             'currency' => 'KHR',
@@ -129,101 +134,36 @@ class Plugin extends AbstractPlugin implements PaymentInterface
             'body' => sprintf('CNY %s @ rate %s = KHR %s', $this->fmtMoney($cny), $rate, $khrMajor),
             'notifyUrl' => $order['notify_url'],
             'returnUrl' => $order['return_url'],
-            'reqTime' => (string) (int) (microtime(true) * 1000),
             'version' => '1.0',
             'signType' => 'MD5',
         ];
-        $params['sign'] = $this->sign($params, $appSecret);
 
-        $raw = $this->httpPostJson($gateway . '/api/pay/unifiedOrder', $params);
-        $json = json_decode($raw, true);
-        if (!is_array($json)) {
-            Log::error('[JeepayAbaQr] bad response', ['raw' => $raw]);
-            throw new ApiException('Jeepay 返回非 JSON');
-        }
+        // 1) 首次：用 Xboard trade_no
+        $data = $this->tryUnifiedOrder($gateway, $appSecret, $baseParams, $tradeNo);
 
-        if (($json['code'] ?? -1) != 0) {
-            $msg = $json['msg'] ?? json_encode($json, JSON_UNESCAPED_UNICODE);
-            Log::error('[JeepayAbaQr] unifiedOrder fail', $json);
-            throw new ApiException('Jeepay 下单失败: ' . $msg);
-        }
-
-        $data = $json['data'] ?? [];
-        if (is_object($data)) {
-            $data = (array) $data;
-        }
-        $payDataType = $data['payDataType'] ?? '';
-        $payData = $data['payData'] ?? '';
-
-        $expectAmount = '';
-        if (!empty($data['channelAttach'])) {
-            $attach = $data['channelAttach'];
-            if (is_string($attach)) {
-                $decoded = json_decode($attach, true);
-            } elseif (is_array($attach)) {
-                $decoded = $attach;
-            } else {
-                $decoded = null;
+        // 2) 已存在：查单复用
+        if ($data === null) {
+            $data = $this->queryPayOrder($gateway, $mchNo, $appId, $appSecret, $tradeNo);
+            if (is_array($data)) {
+                Log::info('[JeepayAbaQr] reuse query order', ['trade_no' => $tradeNo]);
             }
-            if (is_array($decoded) && !empty($decoded['expectAmount'])) {
-                $expectAmount = (string) $decoded['expectAmount'];
+        }
+
+        // 3) 仍失败：换唯一 mchOrderNo 再下单（回调 strip 后缀）
+        if ($data === null) {
+            $retryNo = $tradeNo . 'R' . substr((string) time(), -8) . random_int(10, 99);
+            $data = $this->tryUnifiedOrder($gateway, $appSecret, $baseParams, $retryNo, true);
+            if ($data === null) {
+                throw new ApiException('Jeepay 下单失败: 无法创建或查询支付单，请稍后重试');
             }
-            Log::info('[JeepayAbaQr] channelAttach', [
-                'trade_no' => $order['trade_no'],
-                'cny' => $cny,
-                'khr' => $khrMajor,
-                'expect' => $expectAmount,
-                'attach' => $data['channelAttach'],
+            Log::info('[JeepayAbaQr] retry with new mchOrderNo', [
+                'trade_no' => $tradeNo,
+                'mchOrderNo' => $retryNo,
             ]);
         }
 
-        // 拿到二维码内容（codeUrl 为 KHQR 字符串；codeImgUrl 则退回跳转图片不理想，优先 codeUrl）
-        $qrContent = '';
-        if ($payDataType === 'codeUrl' || $payDataType === '' || $payDataType === 'codeImgUrl') {
-            $qrContent = (string) $payData;
-        } elseif ($payDataType === 'payUrl' && $payData) {
-            // 兜底：直接跳转 Jeepay 返回的 URL
-            return ['type' => 1, 'data' => $payData];
-        }
-
-        if ($qrContent === '') {
-            throw new ApiException('Jeepay 未返回二维码数据');
-        }
-
-        // 用户必须手输的金额：优先中转 expectAmount（含尾数），否则整数瑞尔
-        $payKhr = $expectAmount !== '' ? $expectAmount : (string) $khrMajor;
-
-        // 支付成功后说明页轮询到账并跳回订单页
-        $returnUrl = (string) ($order['return_url'] ?? '');
-        if ($returnUrl === '') {
-            // Xboard 用户中心订单详情（hash 路由）
-            $host = '';
-            if (!empty($order['notify_url']) && preg_match('#^(https?://[^/]+)#', (string) $order['notify_url'], $hm)) {
-                $host = $hm[1];
-            }
-            $returnUrl = ($host !== '' ? $host : '') . '/#/order/' . $order['trade_no'];
-        }
-
-        $query = [
-            'cny' => $this->fmtMoney($cny),
-            'khr' => (string) $khrMajor,
-            'rate' => (string) $rate,
-            'qr' => $qrContent,
-            'trade' => (string) $order['trade_no'],
-            'return' => $returnUrl,
-        ];
-        if ($expectAmount !== '') {
-            $query['expect'] = $expectAmount;
-        }
-
-        // 说明页：醒目显示应付瑞尔 + 汇率算法 + 二维码
-        $tipUrl = $tipPage . '?' . http_build_query($query);
-
-        Log::info('[JeepayAbaQr] tip page', [
-            'trade_no' => $order['trade_no'],
-            'pay_khr' => $payKhr,
-            'tip' => $tipUrl,
-        ]);
+        $tipUrl = $this->buildTipUrl($tipPage, $order, $cny, $khrMajor, $rate, $data);
+        Cache::put($cacheKey, $tipUrl, now()->addHours(6));
 
         return [
             'type' => 1,
@@ -251,11 +191,215 @@ class Plugin extends AbstractPlugin implements PaymentInterface
             return false;
         }
 
+        $mchOrderNo = (string) ($params['mchOrderNo'] ?? '');
+        $tradeNo = $this->resolveTradeNo($mchOrderNo);
+
+        // 支付成功后清 tip 缓存
+        if ($tradeNo !== '') {
+            Cache::forget('jeepay_aba_qr_tip:' . $tradeNo);
+        }
+
         return [
-            'trade_no' => $params['mchOrderNo'] ?? '',
+            'trade_no' => $tradeNo,
             'callback_no' => $params['payOrderId'] ?? ($params['channelOrderNo'] ?? ''),
             'custom_result' => 'success',
         ];
+    }
+
+    /**
+     * 尝试统一下单。成功返回 data 数组；「已存在」返回 null；其它错误抛异常。
+     * @param bool $throwOnExists 重试单号时「已存在」也抛错
+     */
+    private function tryUnifiedOrder(
+        string $gateway,
+        string $appSecret,
+        array $baseParams,
+        string $mchOrderNo,
+        bool $throwOnExists = false
+    ): ?array {
+        $params = $baseParams;
+        $params['mchOrderNo'] = $mchOrderNo;
+        $params['reqTime'] = (string) (int) (microtime(true) * 1000);
+        $params['sign'] = $this->sign($params, $appSecret);
+
+        $raw = $this->httpPostJson($gateway . '/api/pay/unifiedOrder', $params);
+        $json = json_decode($raw, true);
+        if (!is_array($json)) {
+            Log::error('[JeepayAbaQr] bad response', ['raw' => $raw]);
+            throw new ApiException('Jeepay 返回非 JSON');
+        }
+
+        if (($json['code'] ?? -1) == 0) {
+            $data = $json['data'] ?? [];
+            if (is_object($data)) {
+                $data = (array) $data;
+            }
+            return is_array($data) ? $data : [];
+        }
+
+        $msg = (string) ($json['msg'] ?? json_encode($json, JSON_UNESCAPED_UNICODE));
+        if ($this->isOrderExistsError($msg)) {
+            Log::info('[JeepayAbaQr] order exists', ['mchOrderNo' => $mchOrderNo, 'msg' => $msg]);
+            if ($throwOnExists) {
+                throw new ApiException('Jeepay 下单失败: ' . $msg);
+            }
+            return null;
+        }
+
+        Log::error('[JeepayAbaQr] unifiedOrder fail', $json);
+        throw new ApiException('Jeepay 下单失败: ' . $msg);
+    }
+
+    /** 查询已存在的支付单，尽量拿到 payData / channelAttach */
+    private function queryPayOrder(
+        string $gateway,
+        string $mchNo,
+        string $appId,
+        string $appSecret,
+        string $mchOrderNo
+    ): ?array {
+        $params = [
+            'mchNo' => $mchNo,
+            'appId' => $appId,
+            'mchOrderNo' => $mchOrderNo,
+            'reqTime' => (string) (int) (microtime(true) * 1000),
+            'version' => '1.0',
+            'signType' => 'MD5',
+        ];
+        $params['sign'] = $this->sign($params, $appSecret);
+
+        try {
+            $raw = $this->httpPostJson($gateway . '/api/pay/query', $params);
+        } catch (\Throwable $e) {
+            Log::warning('[JeepayAbaQr] query network fail', ['err' => $e->getMessage()]);
+            return null;
+        }
+
+        $json = json_decode($raw, true);
+        if (!is_array($json) || ($json['code'] ?? -1) != 0) {
+            Log::warning('[JeepayAbaQr] query fail', ['raw' => $raw]);
+            return null;
+        }
+
+        $data = $json['data'] ?? [];
+        if (is_object($data)) {
+            $data = (array) $data;
+        }
+        if (!is_array($data) || empty($data)) {
+            return null;
+        }
+
+        // 已支付则不要再给 tip（由 Xboard 订单状态处理）
+        $state = (string) ($data['state'] ?? '');
+        if ($state === '2') {
+            Log::info('[JeepayAbaQr] query shows already paid', ['mchOrderNo' => $mchOrderNo]);
+            // 仍返回 data，前端 tip 会轮询订单；或抛提示
+        }
+
+        return $data;
+    }
+
+    private function buildTipUrl(
+        string $tipPage,
+        array $order,
+        float $cny,
+        int $khrMajor,
+        float $rate,
+        array $data
+    ): string {
+        $payDataType = (string) ($data['payDataType'] ?? '');
+        $payData = $data['payData'] ?? '';
+
+        $expectAmount = '';
+        if (!empty($data['channelAttach'])) {
+            $attach = $data['channelAttach'];
+            if (is_string($attach)) {
+                $decoded = json_decode($attach, true);
+            } elseif (is_array($attach)) {
+                $decoded = $attach;
+            } else {
+                $decoded = null;
+            }
+            if (is_array($decoded) && !empty($decoded['expectAmount'])) {
+                $expectAmount = (string) $decoded['expectAmount'];
+            }
+        }
+
+        $qrContent = '';
+        if ($payDataType === 'codeUrl' || $payDataType === '' || $payDataType === 'codeImgUrl') {
+            $qrContent = (string) $payData;
+        } elseif ($payDataType === 'payUrl' && $payData) {
+            // 查单有时只返回 payUrl
+            return (string) $payData;
+        }
+
+        if ($qrContent === '') {
+            // 部分 query 不回 payData：用固定商业码无法恢复；抛错让用户走重试单号
+            throw new ApiException('Jeepay 未返回二维码数据，请稍后再点结账');
+        }
+
+        $returnUrl = (string) ($order['return_url'] ?? '');
+        if ($returnUrl === '') {
+            $host = '';
+            if (!empty($order['notify_url']) && preg_match('#^(https?://[^/]+)#', (string) $order['notify_url'], $hm)) {
+                $host = $hm[1];
+            }
+            $returnUrl = ($host !== '' ? $host : '') . '/#/order/' . $order['trade_no'];
+        }
+
+        $query = [
+            'cny' => $this->fmtMoney($cny),
+            'khr' => (string) $khrMajor,
+            'rate' => (string) $rate,
+            'qr' => $qrContent,
+            'trade' => (string) $order['trade_no'],
+            'return' => $returnUrl,
+        ];
+        if ($expectAmount !== '') {
+            $query['expect'] = $expectAmount;
+        }
+
+        $tipUrl = $tipPage . '?' . http_build_query($query);
+        Log::info('[JeepayAbaQr] tip page', [
+            'trade_no' => $order['trade_no'],
+            'pay_khr' => $expectAmount !== '' ? $expectAmount : (string) $khrMajor,
+            'tip' => $tipUrl,
+        ]);
+
+        return $tipUrl;
+    }
+
+    private function normalizeTipPage(string $tipPage): string
+    {
+        $tipPage = rtrim($tipPage, '/');
+        if (!preg_match('/\.(php|html)$/i', $tipPage)) {
+            $tipPage = $tipPage . '/aba-khqr-pay.php';
+        }
+        if (preg_match('/aba-khqr-pay\.html$/i', $tipPage)) {
+            $tipPage = (string) preg_replace('/\.html$/i', '.php', $tipPage);
+        }
+        return $tipPage;
+    }
+
+    /** mchOrderNo → Xboard trade_no（去掉重试后缀 R########） */
+    private function resolveTradeNo(string $mchOrderNo): string
+    {
+        if (preg_match('/^(.*)R\d{8,}$/', $mchOrderNo, $m)) {
+            return $m[1];
+        }
+        return $mchOrderNo;
+    }
+
+    private function isOrderExistsError(string $msg): bool
+    {
+        if ($msg === '') {
+            return false;
+        }
+        if (mb_strpos($msg, '已存在') !== false) {
+            return true;
+        }
+        $lower = strtolower($msg);
+        return str_contains($lower, 'already exist') || str_contains($lower, 'already exists');
     }
 
     private function sign(array $params, string $key): string
