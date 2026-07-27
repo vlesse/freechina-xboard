@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>支付宝扫码支付 · 请输入瑞尔金额</title>
-  <!-- 本地二维码库，避免海外 CDN 被墙导致不显示 -->
-  <script src="/qrcode.min.js"></script>
   <style>
     :root {
       --bg: #0f1419;
@@ -119,11 +117,25 @@
       background: #fff;
       padding: 12px;
       border-radius: 12px;
+      min-width: 264px;
+      min-height: 264px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    #qrcode canvas, #qrcode img {
-      display: block;
+    #qrcode canvas, #qrcode img, #qrcode table, #qrcode svg {
+      display: block !important;
       width: 240px !important;
       height: 240px !important;
+      max-width: 100%;
+    }
+    #qrcode .qr-err {
+      color: #c00;
+      font-size: 13px;
+      padding: 12px;
+      max-width: 240px;
+      text-align: center;
+      line-height: 1.5;
     }
     .calc {
       font-size: 14px;
@@ -406,82 +418,167 @@
       }
 
       const el = document.getElementById('qrcode');
-      function renderQrFallback(text) {
-        el.innerHTML = '';
-        const img = document.createElement('img');
-        img.width = 240;
-        img.height = 240;
-        img.alt = 'QR';
-        img.style.display = 'block';
-        // 多镜像回退（任一可用即可）
-        const mirrors = [
-          'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=' + encodeURIComponent(text),
-          'https://quickchart.io/qr?size=240&text=' + encodeURIComponent(text),
-          'https://chart.googleapis.com/chart?cht=qr&chs=240x240&chld=M|1&chl=' + encodeURIComponent(text)
-        ];
-        let i = 0;
-        img.onerror = function () {
-          i += 1;
-          if (i < mirrors.length) {
-            img.src = mirrors[i];
-          } else {
-            el.innerHTML = '<div style="color:#c00;padding:16px;font-size:13px;max-width:240px">' +
-              '二维码生成失败，请复制金额后使用支付宝扫「收款码」手输金额，或刷新页面重试。</div>';
-          }
-        };
-        img.src = mirrors[0];
-        el.appendChild(img);
+
+      function showQrError(msg) {
+        el.innerHTML = '<div class="qr-err">' + (msg || '二维码生成失败') +
+          '<br>请复制上方瑞尔金额，打开支付宝扫「ABA 收款码」手输金额。</div>';
       }
-      function renderQrLocal(text) {
-        el.innerHTML = '';
+
+      /** 把已生成的 canvas 转成独立 img（避免库把 canvas 隐藏后 WebView 空白） */
+      function paintFromCanvas(canvas) {
+        if (!canvas) return false;
         try {
-          // qrcodejs (davidshimjs)：new QRCode(dom, options)
-          if (typeof QRCode === 'function') {
+          var dataUrl = canvas.toDataURL('image/png');
+          if (!dataUrl || dataUrl.length < 100) return false;
+          el.innerHTML = '';
+          var img = document.createElement('img');
+          img.width = 240;
+          img.height = 240;
+          img.alt = 'KHQR';
+          img.src = dataUrl;
+          el.appendChild(img);
+          return true;
+        } catch (e) {
+          // 部分 WebView 禁 toDataURL：直接露出 canvas
+          el.innerHTML = '';
+          canvas.style.display = 'block';
+          canvas.style.width = '240px';
+          canvas.style.height = '240px';
+          el.appendChild(canvas);
+          return true;
+        }
+      }
+
+      function renderQrByLib(text) {
+        if (typeof QRCode !== 'function') return false;
+        var levels = [];
+        if (QRCode.CorrectLevel) {
+          // L=1 容量更大；M=0；Q=3；H=2 —— 注意 M 是 0，不能写 || 默认
+          levels.push(QRCode.CorrectLevel.L, QRCode.CorrectLevel.M, QRCode.CorrectLevel.Q, QRCode.CorrectLevel.H);
+        } else {
+          levels.push(1, 0, 3, 2);
+        }
+        for (var li = 0; li < levels.length; li++) {
+          try {
+            var box = document.createElement('div');
+            box.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:240px;height:240px;';
+            document.body.appendChild(box);
             // eslint-disable-next-line no-new
-            new QRCode(el, {
+            new QRCode(box, {
               text: text,
               width: 240,
               height: 240,
               colorDark: '#000000',
               colorLight: '#ffffff',
-              correctLevel: (QRCode.CorrectLevel && QRCode.CorrectLevel.M) || 0
+              correctLevel: levels[li]
             });
-            // 若库异步失败，延迟检查是否画上了 canvas/img
-            setTimeout(function () {
-              if (!el.querySelector('canvas, img, table')) {
-                renderQrFallback(text);
-              }
-            }, 800);
-            return;
-          }
-          // node-qrcode 浏览器 UMD：QRCode.toCanvas
-          if (window.QRCode && typeof QRCode.toCanvas === 'function') {
-            QRCode.toCanvas(document.createElement('canvas'), text, {
-              width: 240,
-              margin: 1,
-              errorCorrectionLevel: 'M'
-            }, function (err, canvas) {
-              if (err || !canvas) {
-                renderQrFallback(text);
-                return;
-              }
+            var canvas = box.querySelector('canvas');
+            var img = box.querySelector('img');
+            var table = box.querySelector('table');
+            var svg = box.querySelector('svg');
+            var ok = false;
+            if (canvas) {
+              ok = paintFromCanvas(canvas);
+            } else if (img && img.src && img.src.indexOf('data:') === 0) {
               el.innerHTML = '';
-              el.appendChild(canvas);
-            });
-            return;
+              img.style.display = 'block';
+              img.width = 240;
+              img.height = 240;
+              el.appendChild(img);
+              ok = true;
+            } else if (table) {
+              el.innerHTML = '';
+              el.appendChild(table);
+              ok = true;
+            } else if (svg) {
+              el.innerHTML = '';
+              svg.setAttribute('width', '240');
+              svg.setAttribute('height', '240');
+              svg.style.width = '240px';
+              svg.style.height = '240px';
+              el.appendChild(svg);
+              ok = true;
+            }
+            if (box.parentNode) box.parentNode.removeChild(box);
+            if (ok) return true;
+          } catch (e) {
+            console.warn('QR level fail', levels[li], e);
+            try {
+              var dead = document.body.querySelectorAll('div');
+              // ignore cleanup noise
+            } catch (e2) {}
           }
-        } catch (e) {
-          console.error(e);
         }
-        renderQrFallback(text);
+        return false;
       }
-      // 等本地脚本就绪（若已缓存则立刻执行）
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () { renderQrLocal(qr); });
-      } else {
-        // 脚本在 head 同步加载；再给一帧确保 QRCode 全局可用
-        setTimeout(function () { renderQrLocal(qr); }, 0);
+
+      function renderQrViaImg(text, urls, onFail) {
+        el.innerHTML = '';
+        var img = document.createElement('img');
+        img.width = 240;
+        img.height = 240;
+        img.alt = 'KHQR';
+        img.style.display = 'block';
+        var i = 0;
+        img.onload = function () { /* ok */ };
+        img.onerror = function () {
+          i += 1;
+          if (i < urls.length) {
+            img.src = urls[i];
+          } else if (typeof onFail === 'function') {
+            onFail();
+          } else {
+            showQrError('二维码生成失败');
+          }
+        };
+        img.src = urls[0];
+        el.appendChild(img);
       }
+
+      function renderQr(text) {
+        if (!text) {
+          showQrError('缺少二维码数据');
+          return;
+        }
+        el.innerHTML = '';
+        // 1) 同源服务端出图（本机 qrencode，国内最稳）
+        // 2) 浏览器本地 js 库
+        // 3) 海外镜像兜底
+        var sameOrigin = '/qr-img.php?t=' + encodeURIComponent(text);
+        renderQrViaImg(text, [sameOrigin], function () {
+          if (renderQrByLib(text)) return;
+          renderQrViaImg(text, [
+            'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=' + encodeURIComponent(text),
+            'https://quickchart.io/qr?size=240&margin=1&text=' + encodeURIComponent(text)
+          ], function () {
+            showQrError('二维码生成失败（同源与本地库均不可用）');
+          });
+        });
+      }
+
+      // 动态加载本地库（放 body 末尾，避免 head 时机问题），失败再渲染
+      function ensureQrLib(cb) {
+        if (typeof QRCode === 'function') {
+          cb();
+          return;
+        }
+        var s = document.createElement('script');
+        s.src = '/qrcode.min.js?v=20260727';
+        s.onload = function () { cb(); };
+        s.onerror = function () {
+          // 再试国内 bootcdn 同源拷贝失败时的备用
+          var s2 = document.createElement('script');
+          s2.src = 'https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+          s2.onload = function () { cb(); };
+          s2.onerror = function () { cb(); };
+          document.head.appendChild(s2);
+        };
+        document.head.appendChild(s);
+      }
+
+      ensureQrLib(function () {
+        renderQr(qr);
+      });
 
       document.getElementById('copyBtn').addEventListener('click', async function () {
         try {
