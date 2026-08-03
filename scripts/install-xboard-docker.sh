@@ -25,10 +25,10 @@ if ! docker ps --format '{{.Names}}' | grep -qx "${CONTAINER}"; then
 fi
 
 echo "==> 容器: ${CONTAINER}"
-echo "==> 检查容器内路径 /www ..."
-docker exec "${CONTAINER}" ls -la /www/artisan /www/public >/dev/null
+echo "==> 检查容器内 /www ..."
+docker exec "${CONTAINER}" ls -la /www/artisan /www/public
 
-echo "==> 复制说明页与二维码资源到 /www/public"
+echo "==> 复制说明页到 /www/public"
 for f in aba-khqr-pay.html aba-khqr-pay.php qrcode.min.js qr-img.php; do
   if [[ -f "${ROOT_DIR}/overlay/public/${f}" ]]; then
     docker cp "${ROOT_DIR}/overlay/public/${f}" "${CONTAINER}:/www/public/${f}"
@@ -36,9 +36,8 @@ for f in aba-khqr-pay.html aba-khqr-pay.php qrcode.min.js qr-img.php; do
   fi
 done
 
-# 经典支付网关（若容器是 app/Payments 架构）
 if docker exec "${CONTAINER}" test -d /www/app/Payments; then
-  echo "==> 检测到 app/Payments，复制经典支付类"
+  echo "==> 复制经典支付类 app/Payments"
   for f in JeepayAbaQr JeepayAbaPc JeepayPaypal JeepayMidtrans TokenPay; do
     if [[ -f "${ROOT_DIR}/overlay/payments/${f}.php" ]]; then
       docker cp "${ROOT_DIR}/overlay/payments/${f}.php" "${CONTAINER}:/www/app/Payments/${f}.php"
@@ -47,100 +46,44 @@ if docker exec "${CONTAINER}" test -d /www/app/Payments; then
   done
 fi
 
-# plugins-core（若存在）
-if docker exec "${CONTAINER}" test -d /www/plugins-core || docker exec "${CONTAINER}" test -f /www/app/Contracts/PaymentInterface.php 2>/dev/null; then
-  if docker exec "${CONTAINER}" test -d /www/plugins-core 2>/dev/null || docker exec "${CONTAINER}" mkdir -p /www/plugins-core; then
-    echo "==> 尝试复制 plugins-core（若目录可用）"
-    for d in JeepayAbaQr JeepayAbaPc JeepayPaypal JeepayMidtrans TokenPay; do
-      if [[ -d "${ROOT_DIR}/overlay/plugins-core/${d}" ]]; then
-        docker cp "${ROOT_DIR}/overlay/plugins-core/${d}" "${CONTAINER}:/www/plugins-core/" 2>/dev/null \
-          && echo "    + plugins-core/${d}" || true
-      fi
-    done
-  fi
+if docker exec "${CONTAINER}" test -d /www/plugins-core 2>/dev/null; then
+  echo "==> 复制 plugins-core"
+  for d in JeepayAbaQr JeepayAbaPc JeepayPaypal JeepayMidtrans TokenPay; do
+    if [[ -d "${ROOT_DIR}/overlay/plugins-core/${d}" ]]; then
+      docker cp "${ROOT_DIR}/overlay/plugins-core/${d}" "${CONTAINER}:/www/plugins-core/" \
+        && echo "    + plugins-core/${d}" || true
+    fi
+  done
 fi
 
-echo "==> 修补 Caddy：让 /aba-khqr-pay.html 等走静态文件，其余仍反代 Octane"
-docker exec "${CONTAINER}" sh -c '
-set -e
-CADDY=/etc/caddy/Caddyfile
-if [ ! -f "$CADDY" ]; then
-  echo "未找到 $CADDY"
+echo "==> 写入 FreeChina Caddyfile（静态 tip 页 + Octane）"
+if [[ -f "${ROOT_DIR}/docker/Caddyfile.freechina" ]]; then
+  docker exec "${CONTAINER}" sh -c 'cp -a /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bak.freechina 2>/dev/null || true'
+  docker cp "${ROOT_DIR}/docker/Caddyfile.freechina" "${CONTAINER}:/etc/caddy/Caddyfile"
+  echo "    已替换 /etc/caddy/Caddyfile"
+else
+  echo "错误: 缺少 ${ROOT_DIR}/docker/Caddyfile.freechina"
   exit 1
 fi
-cp -a "$CADDY" "${CADDY}.bak.freechina.$(date +%Y%m%d%H%M%S)" 2>/dev/null || true
 
-# 已打过补丁则跳过
-if grep -q "FreeChina tip pages" "$CADDY" 2>/dev/null; then
-  echo "Caddy 已包含 FreeChina 静态规则，跳过写入"
-else
-  # 在 reverse_proxy 到 Octane 之前插入静态 handle
-  # 官方文件结构：@ws ... reverse_proxy @ws ... 然后 reverse_proxy 127.0.0.1:7002
-  cat > /tmp/fc_caddy_snip.txt << "SNIP"
+docker exec "${CONTAINER}" sh -c 'chown www:www /www/public/aba-khqr-pay.html /www/public/qrcode.min.js 2>/dev/null; chmod 644 /www/public/aba-khqr-pay.html /www/public/qrcode.min.js 2>/dev/null; true'
 
-	# FreeChina tip pages (must be before Octane reverse_proxy)
-	@fc_static {
-		path /aba-khqr-pay.html /aba-khqr-pay.php /qrcode.min.js /qr-img.php
-	}
-	handle @fc_static {
-		root * /www/public
-		file_server
-	}
+echo "==> 重启容器"
+docker restart "${CONTAINER}"
+echo "    等待 8 秒..."
+sleep 8
 
-SNIP
-  # 插入到第一个「非 @ws 的 reverse_proxy」之前
-  if grep -q "reverse_proxy 127.0.0.1" "$CADDY"; then
-    # 用 awk 插入
-    awk "
-      /reverse_proxy 127.0.0.1:.*OCTANE|reverse_proxy 127.0.0.1:7002/ && !done {
-        while ((getline line < \"/tmp/fc_caddy_snip.txt\") > 0) print line
-        close(\"/tmp/fc_caddy_snip.txt\")
-        done=1
-      }
-      { print }
-    " "$CADDY" > /tmp/Caddyfile.new && mv /tmp/Caddyfile.new "$CADDY"
-    echo "已写入静态 file_server 规则"
-  else
-    echo "警告: 未匹配到 Octane reverse_proxy 行，尝试追加到 server 块"
-    # 兜底：在最后一个 } 前插入过复杂，打印提示
-    cat /tmp/fc_caddy_snip.txt
-    echo "请手动把以上片段插入 Caddyfile 中 reverse_proxy 127.0.0.1:7002 之前"
-  fi
-fi
-
-chown -R www:www /www/public/aba-khqr-pay.html /www/public/qrcode.min.js 2>/dev/null || true
-chmod 644 /www/public/aba-khqr-pay.html /www/public/qrcode.min.js 2>/dev/null || true
-
-# 重载 Caddy
-if command -v caddy >/dev/null; then
-  caddy validate --config /etc/caddy/Caddyfile 2>/dev/null || true
-  # supervisor 管理时发信号
-  pkill -HUP caddy 2>/dev/null || caddy reload --config /etc/caddy/Caddyfile 2>/dev/null || true
-fi
-echo "Caddy 已尝试 reload"
-'
-
-# 再从宿主机触发 reload（有的环境 pkill 在 docker exec 里权限不足）
-docker exec "${CONTAINER}" sh -c 'pkill -HUP caddy 2>/dev/null || kill -HUP $(pidof caddy) 2>/dev/null || true' || true
-
-echo ""
-echo "==> 容器内文件确认"
-docker exec "${CONTAINER}" ls -la /www/public/aba-khqr-pay.html /www/public/qrcode.min.js 2>&1 || true
-
-echo ""
-echo "==> 本机经 7001 探测（容器内 curl）"
-docker exec "${CONTAINER}" sh -c 'wget -q -S -O /dev/null http://127.0.0.1:7001/aba-khqr-pay.html 2>&1 | head -15' \
+echo "==> 容器内探测"
+docker exec "${CONTAINER}" ls -la /www/public/aba-khqr-pay.html /www/public/qrcode.min.js || true
+docker exec "${CONTAINER}" sh -c 'wget -S -O /dev/null http://127.0.0.1:7001/aba-khqr-pay.html 2>&1 | head -20' \
   || docker exec "${CONTAINER}" sh -c 'curl -sI http://127.0.0.1:7001/aba-khqr-pay.html | head -15' \
   || true
 
 echo ""
 echo "=========================================="
-echo " 完成。请在后台把「金额说明页 URL」改成："
-echo "   https://你的域名/aba-khqr-pay.html"
-echo " 然后重新下一笔订单测试（旧链接不会变）。"
-echo ""
-echo " 若仍 404："
-echo "   docker exec -it ${CONTAINER} cat /etc/caddy/Caddyfile"
-echo "   确认 @fc_static / file_server 在 reverse_proxy 7002 之前"
-echo "   docker restart ${CONTAINER}"
+echo " 完成。"
+echo " 1) 后台「金额说明页 URL」改成："
+echo "      https://你的域名/aba-khqr-pay.html"
+echo " 2) 浏览器打开该地址应不是 Laravel 404"
+echo " 3) 重新下一笔订单测试"
 echo "=========================================="
