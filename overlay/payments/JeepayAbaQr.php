@@ -261,9 +261,15 @@ class JeepayAbaQr
         if ($tipPage === '') {
             return '';
         }
-        // 默认用纯静态 .html（Caddy/Docker 上 .php 常被 Laravel 吞掉变 404）
+        // 默认用纯静态 .html（Caddy/Docker 上 .php 不会被执行）
         if (!preg_match('/\.(php|html)$/i', $tipPage)) {
             $tipPage .= '/aba-khqr-pay.html';
+        }
+        // 后台若仍填 .php，强制改成 .html（Docker 静态托管）
+        if (preg_match('/aba-khqr-pay\.php$/i', $tipPage)) {
+            $tipPage = preg_replace('/\.php$/i', '.html', $tipPage);
+        } elseif (preg_match('/\.php$/i', $tipPage)) {
+            $tipPage = preg_replace('/\.php$/i', '.html', $tipPage);
         }
         return $tipPage;
     }

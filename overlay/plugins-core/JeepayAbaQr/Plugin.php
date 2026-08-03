@@ -376,6 +376,10 @@ class Plugin extends AbstractPlugin implements PaymentInterface
         if (!preg_match('/\.(php|html)$/i', $tipPage)) {
             $tipPage = $tipPage . '/aba-khqr-pay.html';
         }
+        // 后台配置若仍是 .php，强制改成 .html（Docker 下 php 不被执行）
+        if (preg_match('/\.php$/i', $tipPage)) {
+            $tipPage = (string) preg_replace('/\.php$/i', '.html', $tipPage);
+        }
         return $tipPage;
     }
 
