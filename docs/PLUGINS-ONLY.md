@@ -219,31 +219,37 @@ https://你的域名/api/v1/guest/payment/notify/{支付方式名}/{uuid}
 **Q：脚本提示不是 Xboard 目录？**  
 A：路径要指到含 `artisan` 的那一层，不要指到 `public` 里面。
 
-**Q：结账后说明页 404（Laravel Not Found / Caddy）？**  
+**Q：结账后说明页 404（Laravel Not Found / Caddy / Docker）？**  
 
-这是目前最常见问题。响应若是 Laravel 样式的 `404 Not Found`，说明请求进了框架，**真正对外的 public 里没有文件**（Docker 尤其容易拷错位置）。
+官方镜像 `ghcr.io/cedar2025/xboard` 的 **Caddy 会把几乎所有请求反代到 Octane**，  
+**不会**直接读 `public/*.html`。所以：
 
-在**跑网站的那台机器**上执行：
+1. 只在宿主机 `install-plugins-only` → **没用**  
+2. 只 `docker cp` 不改 Caddy → **仍可能 404**  
+
+### 官方 Docker 一键装说明页（推荐）
 
 ```bash
-# 1) 找到真实 Xboard 根目录
-find / -name artisan 2>/dev/null | head
+# 在 freechina-xboard 仓库根目录
+git pull
+# 容器名用 docker ps 看到的，你这边是 xboard-xboard-1
+bash scripts/install-xboard-docker.sh xboard-xboard-1
+```
 
-# 2) Docker 部署时，文件必须进「容器内」的 public
-docker ps
-# 假设容器名 xboard：
-docker exec xboard ls -la /www/wwwroot/*/public/aba-khqr-pay.html 2>/dev/null
-# 或
-docker exec xboard ls -la public/aba-khqr-pay.html
+脚本会：把文件拷进容器 `/www/public/`，并给 Caddy 加上  
+`/aba-khqr-pay.html` 等路径的 `file_server`，再 reload Caddy。
 
-# 3) 拷进容器（路径按实际改）
-docker cp overlay/public/aba-khqr-pay.html xboard:/path/in/container/public/
-docker cp overlay/public/qrcode.min.js xboard:/path/in/container/public/
-docker cp overlay/public/qr-img.php xboard:/path/in/container/public/
+手动版：
 
-# 4) 非 Docker：确认站点 root = .../public
-ls -la /你的xboard/public/aba-khqr-pay.html
-curl -sI https://你的域名/aba-khqr-pay.html   # 应 200，不是 404
+```bash
+# 容器里 artisan 在 /www（不是宿主机 find）
+docker exec xboard-xboard-1 ls -la /www/artisan /www/public
+
+docker cp overlay/public/aba-khqr-pay.html xboard-xboard-1:/www/public/
+docker cp overlay/public/qrcode.min.js     xboard-xboard-1:/www/public/
+
+# 必须改 Caddy：见 scripts/install-xboard-docker.sh
+# 或 docker restart xboard-xboard-1 前确认 Caddy 已 patch
 ```
 
 后台「金额说明页 URL」请填：
@@ -252,7 +258,12 @@ curl -sI https://你的域名/aba-khqr-pay.html   # 应 200，不是 404
 https://你的域名/aba-khqr-pay.html
 ```
 
-优先用 **`.html`（纯静态）**，不要只用 `.php`（很多 Caddy 配置会把所有请求丢给 Laravel → 404）。
+验证：
+
+```bash
+curl -sI https://你的域名/aba-khqr-pay.html | head -5
+# 必须是 200，不能是 Laravel 的 404
+```
 
 **Q：结账后说明页没有二维码？**  
 A：确认 `public/qrcode.min.js` 或 `qr-img.php` 已复制；浏览器强制刷新；说明页 URL 配置正确。

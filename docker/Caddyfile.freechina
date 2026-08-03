@@ -1,0 +1,36 @@
+# FreeChina 版 Caddyfile（官方 cedar2025/xboard Docker 用）
+# 在 Octane 反代之前，先用 file_server 提供支付说明页静态文件。
+#
+# 安装：docker cp 到容器 /etc/caddy/Caddyfile 后 pkill -HUP caddy
+#
+{
+	admin off
+	auto_https off
+	persist_config off
+	log {
+		output stdout
+		format console
+	}
+	servers {
+		trusted_proxies static 0.0.0.0/0 ::/0
+	}
+}
+
+:{$CADDY_LISTEN_PORT:7001} {
+	@ws path /ws
+	reverse_proxy @ws 127.0.0.1:{$WS_PORT:8076}
+
+	# FreeChina tip pages — 必须在 Octane reverse_proxy 之前
+	@fc_static {
+		path /aba-khqr-pay.html /aba-khqr-pay.php /qrcode.min.js /qr-img.php
+	}
+	handle @fc_static {
+		root * /www/public
+		file_server
+	}
+
+	reverse_proxy 127.0.0.1:{$OCTANE_INTERNAL_PORT:7002} {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+	}
+}
