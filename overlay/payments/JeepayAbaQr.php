@@ -54,7 +54,7 @@ class JeepayAbaQr
             ],
             'tip_page_url' => [
                 'label' => '金额说明页URL',
-                'description' => '推荐 https://你的域名/aba-khqr-pay.php',
+                'description' => '推荐 https://你的域名/aba-khqr-pay.html（纯静态，Docker/Caddy 最稳）；也可 .php',
                 'type' => 'input',
             ],
             'product_name' => [
@@ -261,11 +261,9 @@ class JeepayAbaQr
         if ($tipPage === '') {
             return '';
         }
+        // 默认用纯静态 .html（Caddy/Docker 上 .php 常被 Laravel 吞掉变 404）
         if (!preg_match('/\.(php|html)$/i', $tipPage)) {
-            $tipPage .= '/aba-khqr-pay.php';
-        }
-        if (preg_match('/aba-khqr-pay\.html$/i', $tipPage)) {
-            $tipPage = preg_replace('/\.html$/i', '.php', $tipPage);
+            $tipPage .= '/aba-khqr-pay.html';
         }
         return $tipPage;
     }

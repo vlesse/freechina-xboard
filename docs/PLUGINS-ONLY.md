@@ -219,11 +219,46 @@ https://你的域名/api/v1/guest/payment/notify/{支付方式名}/{uuid}
 **Q：脚本提示不是 Xboard 目录？**  
 A：路径要指到含 `artisan` 的那一层，不要指到 `public` 里面。
 
+**Q：结账后说明页 404（Laravel Not Found / Caddy）？**  
+
+这是目前最常见问题。响应若是 Laravel 样式的 `404 Not Found`，说明请求进了框架，**真正对外的 public 里没有文件**（Docker 尤其容易拷错位置）。
+
+在**跑网站的那台机器**上执行：
+
+```bash
+# 1) 找到真实 Xboard 根目录
+find / -name artisan 2>/dev/null | head
+
+# 2) Docker 部署时，文件必须进「容器内」的 public
+docker ps
+# 假设容器名 xboard：
+docker exec xboard ls -la /www/wwwroot/*/public/aba-khqr-pay.html 2>/dev/null
+# 或
+docker exec xboard ls -la public/aba-khqr-pay.html
+
+# 3) 拷进容器（路径按实际改）
+docker cp overlay/public/aba-khqr-pay.html xboard:/path/in/container/public/
+docker cp overlay/public/qrcode.min.js xboard:/path/in/container/public/
+docker cp overlay/public/qr-img.php xboard:/path/in/container/public/
+
+# 4) 非 Docker：确认站点 root = .../public
+ls -la /你的xboard/public/aba-khqr-pay.html
+curl -sI https://你的域名/aba-khqr-pay.html   # 应 200，不是 404
+```
+
+后台「金额说明页 URL」请填：
+
+```text
+https://你的域名/aba-khqr-pay.html
+```
+
+优先用 **`.html`（纯静态）**，不要只用 `.php`（很多 Caddy 配置会把所有请求丢给 Laravel → 404）。
+
 **Q：结账后说明页没有二维码？**  
-A：确认 `public/qrcode.min.js` 已复制；浏览器强制刷新；说明页 URL 配置正确。
+A：确认 `public/qrcode.min.js` 或 `qr-img.php` 已复制；浏览器强制刷新；说明页 URL 配置正确。
 
 **Q：后台没有支付接口可选？**  
-A：插件未启用；先做第四步。
+A：插件未启用（plugins-core）或文件不在 `app/Payments`（经典版）；见第四步。
 
 ---
 
