@@ -78,8 +78,8 @@ class Plugin extends AbstractPlugin implements PaymentInterface
                 'label' => '金额说明页URL',
                 'type' => 'string',
                 'required' => true,
-                'default' => 'https://free--china.com/aba-khqr-pay.php',
-                'description' => '展示「请输入多少瑞尔」的页面完整地址（推荐 aba-khqr-pay.php，服务端渲染二维码）',
+                'default' => 'https://free--china.com/aba-khqr-pay.html',
+                'description' => '展示「请输入多少瑞尔」的完整地址。推荐 .html 纯静态（Docker/Caddy 最稳）；也可 .php',
             ],
             'product_name' => [
                 'label' => '商品标题前缀',
@@ -372,11 +372,9 @@ class Plugin extends AbstractPlugin implements PaymentInterface
     private function normalizeTipPage(string $tipPage): string
     {
         $tipPage = rtrim($tipPage, '/');
+        // 默认 .html 纯静态：很多 Caddy/Docker 部署会把 .php 交给 Laravel → 404
         if (!preg_match('/\.(php|html)$/i', $tipPage)) {
-            $tipPage = $tipPage . '/aba-khqr-pay.php';
-        }
-        if (preg_match('/aba-khqr-pay\.html$/i', $tipPage)) {
-            $tipPage = (string) preg_replace('/\.html$/i', '.php', $tipPage);
+            $tipPage = $tipPage . '/aba-khqr-pay.html';
         }
         return $tipPage;
     }
